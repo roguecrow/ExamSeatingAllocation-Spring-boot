@@ -1,15 +1,32 @@
 package com.chainsys.examease.dao;
 
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.stereotype.Service;
 
+import com.chainsys.examease.model.Exam;
+import com.chainsys.examease.model.User;
+import com.chainsys.examease.encrypt.PasswordEncryption;
+import com.chainsys.examease.mapper.FindUserRowMapper;
+import com.chainsys.examease.mapper.GetAllExamsRowMapper;
+import com.chainsys.examease.mapper.ExamIdMapper;
+
+
+@Configuration
+@Service
 public class ExamSeatingImpl {
 	
 	@Autowired
 	JdbcTemplate jdbcTemplate;
+	
+	@Autowired
+	PasswordEncryption passwordEncryption;
+
 	
 	private static final String COLUMN_ROLL_NO = "roll_no";
 	private static final String COLUMN_EXAM_ID = "exam_id";
@@ -33,7 +50,7 @@ public class ExamSeatingImpl {
 	private static final String COLUMN_QUALIFICATION_DOCUMENTS = "qualification_documents";
 
 
-	public int userRegisteration(String fullName, String email, String password) {
+	public int userRegistration(String fullName, String email, String password) {
 		String addUser = "INSERT INTO user_credentials (full_name, email, password) VALUES (?, ?, ?)";
 		Object[] userCredObj = { fullName,email,password };
 		int noOfRows = jdbcTemplate.update(addUser, userCredObj);
@@ -41,18 +58,18 @@ public class ExamSeatingImpl {
 		return noOfRows;
 	}
 
-//	public int createExam(String examName, String description, Date examDate, Date applicationStartDate,
-//			Date applicationEndDate) {
-//		String addExam = "INSERT INTO exams (exam_name, description, exam_date, application_start_date, application_end_date) VALUES (?, ?, ?, ?, ?)";
-//	    GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-//		Object[] addExamObj = { examName,description,examDate,applicationStartDate };
-//		int noOfRows = jdbcTemplate.update(addExam, addExamObj);
-//		int examId = -1;
-//		System.out.println("in save -" + noOfRows);
-//		examId = keyHolder.getKey().intValue();
-//		return examId;
-//	}
-//
+	public int createExam(String examName, String description, Date examDate, Date applicationStartDate,
+			Date applicationEndDate) {
+		String addExam = "INSERT INTO exams (exam_name, description, exam_date, application_start_date, application_end_date) VALUES (?, ?, ?, ?, ?)";
+	    GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
+		Object[] addExamObj = { examName,description,examDate,applicationStartDate,applicationEndDate };
+		int noOfRows = jdbcTemplate.update(addExam, addExamObj);
+		int examId = -1;
+		System.out.println("in save -" + noOfRows);
+		examId = keyHolder.getKey().intValue();
+		return examId;
+	}
+
 //	public int addLocationToExam(String city, String venueName, String hallName, int capacity, String address,
 //			String locationUrl, int examId) throws SQLException {
 //		String addLocation = "INSERT INTO exam_locations (city, venue_name, hall_name, total_capacity, address, location_url, exam_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -69,50 +86,29 @@ public class ExamSeatingImpl {
 //		}
 //	}
 //
-//	public List<ExamDetails> getAllExams() throws SQLException {
-//		List<ExamDetails> exams = new ArrayList<>();
-//		String selectAllExams = "SELECT exam_id,exam_name,description,exam_date,application_start_date,application_end_date FROM exams";
-//		try (PreparedStatement preparedStatement = connect.prepareStatement(selectAllExams);
-//				ResultSet resultSet = preparedStatement.executeQuery()) {
-//			while (resultSet.next()) {
-//				 int examId = resultSet.getInt(COLUMN_EXAM_ID);
-//		            String examName = resultSet.getString(COLUMN_EXAM_NAME);
-//		            String description = resultSet.getString(COLUMN_DESCRIPTION);
-//		            Date examDate = resultSet.getDate(COLUMN_EXAM_DATE);
-//		            Date applicationStartDate = resultSet.getDate(COLUMN_APPLICATION_START_DATE);
-//		            Date applicationEndDate = resultSet.getDate(COLUMN_APPLICATION_END_DATE);
-//		    		exams.add(new ExamDetails(examId, examName, description, examDate, applicationStartDate,
-//						applicationEndDate));
-//			}
-//		}
-//		return exams;
-//	}
-//
-//	public boolean findUser(String email, String password, UserDetails details, boolean isSignIn) throws Exception {
-//	    PasswordEncryption mask = new PasswordEncryption();
-//	    String findUser = "SELECT roll_no, full_name, email, password, role_id FROM user_credentials WHERE email = ? AND is_active = ?";
-//	    try (PreparedStatement prepareStatement = connect.prepareStatement(findUser)) {
-//	        prepareStatement.setString(1, email);
-//	        prepareStatement.setBoolean(2, true);
-//	        ResultSet resultSet = prepareStatement.executeQuery();
-//	        if (resultSet.next()) {
-//	            int id = resultSet.getInt(COLUMN_ROLL_NO);
-//	            String username = resultSet.getString("full_name");
-//	            String dbemail = resultSet.getString("email");
-//	            String dbpassword = resultSet.getString("password");
-//	            int roleId = resultSet.getInt("role_id");
-//	            details.setUsername(username);
-//	            details.setRollNo(id);
-//	            details.setRoleId(roleId);
-//
-//	            boolean passwordMatches = mask.decrypt(dbpassword).equals(password);
-//	            boolean emailMatches = email.equals(dbemail);
-//
-//	            return (passwordMatches && emailMatches && isSignIn) || (emailMatches && !isSignIn);
-//	        }
-//	        return false;
-//	    }
-//	}
+    public List<Exam> getAllExams() {
+    	String selectAllExams = "SELECT exam_id, exam_name, description, exam_date, application_start_date, application_end_date FROM exams";
+        return jdbcTemplate.query(selectAllExams, new GetAllExamsRowMapper());
+    }
+	
+	public boolean findUser(String email, String password, User details, boolean isSignIn) throws Exception {
+	    String findUser = "SELECT roll_no, full_name, email, password, role_id FROM user_credentials WHERE email = ? AND is_active = ?";
+        List<User> users = jdbcTemplate.query(findUser,new FindUserRowMapper(), new Object[]{email, true} );
+        
+        if (!users.isEmpty()) {
+            User user = users.get(0);
+            System.out.println("From findUer - " + user.getPassword());
+            boolean passwordMatches = passwordEncryption.decrypt(user.getPassword()).equals(password);
+            boolean emailMatches = email.equals(user.getEmail());
+
+            details.setUsername(user.getUsername());
+            details.setRollNo(user.getRollNo());
+            details.setRoleId(user.getRoleId());
+
+            return (passwordMatches && emailMatches && isSignIn) || (emailMatches && !isSignIn);
+        }
+        return false;
+	}
 //
 //
 //	public ExamDetails getExamById(int examId) throws SQLException {
@@ -297,21 +293,10 @@ public class ExamSeatingImpl {
 //        }
 //    }
 //    
-//    public List<Integer> getExamIdsForRollNo(int rollNo) throws SQLException {
-//        List<Integer> examIds = new ArrayList<>();
-//        String query = "SELECT exam_id FROM exam_seating WHERE roll_no = ?";
-//        
-//        try (PreparedStatement preparedStatement = connect.prepareStatement(query)) {
-//        	 preparedStatement.setInt(1, rollNo);
-//        	 
-//             ResultSet resultSet = preparedStatement.executeQuery();
-//             while (resultSet.next()) {
-//                 int examId = resultSet.getInt(COLUMN_EXAM_ID);
-//                 examIds.add(examId);
-//             } 
-//             return examIds;
-//        }
-//    }
+    public List<Integer> getExamIdsForRollNo(int rollNo) {
+        String query = "SELECT exam_id FROM exam_seating WHERE roll_no = ?";
+        return jdbcTemplate.query(query,new ExamIdMapper(), new Object[]{rollNo});
+    }
 //
 //    public LocationDetails getExamLocationDetails(int rollNo , int examId) throws SQLException {
 //    	 String query = "SELECT es.allocated_seat,es.serial_no, el.* " +

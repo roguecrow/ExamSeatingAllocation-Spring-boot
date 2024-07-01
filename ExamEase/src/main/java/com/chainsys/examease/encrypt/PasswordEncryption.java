@@ -10,6 +10,9 @@ import java.util.Base64;
 
 import javax.crypto.Cipher;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class PasswordEncryption {
 	
 	static String publicKey="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCATl5fra4Jsk/UZXGIvF1P44uFkKjsxtnyHtD1M18MLwtpaFVahsTNfDyVn5GL/zYUMS5tj2oFQwBr4YbB9Q+5b9MTI8m9ehSm5f/CbyTF+aSVUym7aRPbWPA6fioB5fiiIH29wUlCksPBb1ePxi+fSAuHLXIaMLdgissuZI+LbQIDAQAB";
