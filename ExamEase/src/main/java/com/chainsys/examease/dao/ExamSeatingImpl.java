@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 
 import com.chainsys.examease.model.Exam;
 import com.chainsys.examease.model.User;
@@ -15,10 +15,12 @@ import com.chainsys.examease.encrypt.PasswordEncryption;
 import com.chainsys.examease.mapper.FindUserRowMapper;
 import com.chainsys.examease.mapper.GetAllExamsRowMapper;
 import com.chainsys.examease.mapper.ExamIdMapper;
+import com.chainsys.examease.mapper.ExamDetailsRowMapper;
+
 
 
 @Configuration
-@Service
+@Repository
 public class ExamSeatingImpl {
 	
 	@Autowired
@@ -109,29 +111,12 @@ public class ExamSeatingImpl {
         }
         return false;
 	}
-//
-//
-//	public ExamDetails getExamById(int examId) throws SQLException {
-//		ExamDetails exam = null; 
-//
-//		String getExamQuery = "SELECT exam_id, exam_name, description, exam_date, application_start_date, application_end_date FROM exams WHERE exam_id = ?";
-//		try (PreparedStatement preparedStatement = connect.prepareStatement(getExamQuery)) {
-//			preparedStatement.setInt(1, examId);
-//			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-//				if (resultSet.next()) {
-//					int id = resultSet.getInt(COLUMN_EXAM_ID);
-//					String examName = resultSet.getString(COLUMN_EXAM_NAME);
-//					String description = resultSet.getString(COLUMN_DESCRIPTION);
-//					Date examDate = resultSet.getDate(COLUMN_EXAM_DATE);
-//					Date applicationStartDate = resultSet.getDate(COLUMN_APPLICATION_START_DATE);
-//					Date applicationEndDate = resultSet.getDate(COLUMN_APPLICATION_END_DATE);
-//					exam = new ExamDetails(id, examName, description, examDate, applicationStartDate,
-//							applicationEndDate);
-//				}
-//			}
-//		}
-//		return exam;
-//	}
+
+	public Exam getExamById(int examId) {
+        String getExamQuery = "SELECT exam_id, exam_name, description, exam_date, application_start_date, application_end_date FROM exams WHERE exam_id = ?";
+        
+        return jdbcTemplate.queryForObject(getExamQuery, new ExamDetailsRowMapper(),examId );
+    }
 //	
 //	public List<String> cityLocationsForExam(int examId) throws SQLException {
 //	    List<String> cities = new ArrayList<>();
@@ -180,21 +165,17 @@ public class ExamSeatingImpl {
 //	    }
 //	}
 //	
-//	public boolean updateExamDetails(int examId,Date examDate,Date applicationStart,Date applicationEnd) throws SQLException {
-//	    String updateExamQuery = "UPDATE exams SET exam_date = ?, application_start_date = ?, application_end_date = ? WHERE exam_id = ?";
-//	    boolean rowUpdated = false;
-//	    
-//	    try (PreparedStatement preparedStatement = connect.prepareStatement(updateExamQuery)) {
-//	        preparedStatement.setDate(1, new java.sql.Date(examDate.getTime()));
-//	        preparedStatement.setDate(2, new java.sql.Date(applicationStart.getTime()));
-//	        preparedStatement.setDate(3, new java.sql.Date(applicationEnd.getTime()));
-//	        preparedStatement.setInt(4,examId);
-//	        
-//	        rowUpdated = preparedStatement.executeUpdate() > 0;
-//	    }
-//	    
-//	    return rowUpdated;
-//	}
+	 public boolean updateExamDetails(int examId, Date examDate, Date applicationStart, Date applicationEnd) {
+	        String updateExamQuery = "UPDATE exams SET exam_date = ?, application_start_date = ?, application_end_date = ? WHERE exam_id = ?";
+	        
+	        int rowsUpdated = jdbcTemplate.update(updateExamQuery, 
+	            new java.sql.Date(examDate.getTime()), 
+	            new java.sql.Date(applicationStart.getTime()), 
+	            new java.sql.Date(applicationEnd.getTime()), 
+	            examId);
+	        
+	        return rowsUpdated > 0;
+	    }
 //	
 //	
 //	public int addUserDetails(UserDetails details,String appId) throws SQLException {
@@ -293,9 +274,14 @@ public class ExamSeatingImpl {
 //        }
 //    }
 //    
-    public List<Integer> getExamIdsForRollNo(int rollNo) {
+    public List<Integer> getExamIdsForUser(int rollNo) {
         String query = "SELECT exam_id FROM exam_seating WHERE roll_no = ?";
         return jdbcTemplate.query(query,new ExamIdMapper(), new Object[]{rollNo});
+    }
+    
+    public List<Exam> findExam(String queryString) {
+        String findExamQuery = "SELECT * FROM exams WHERE exam_name LIKE ?";
+        return jdbcTemplate.query(findExamQuery, new ExamDetailsRowMapper(), "%" + queryString + "%");
     }
 //
 //    public LocationDetails getExamLocationDetails(int rollNo , int examId) throws SQLException {

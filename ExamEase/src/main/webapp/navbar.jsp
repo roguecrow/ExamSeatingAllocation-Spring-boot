@@ -41,7 +41,7 @@ System.out.println("currentPage :" + currentPage);
                     </li>
                     <% } %>
                     <% if ("homePage".equals(currentPage)) { %>
-                    <form class="d-flex search-form" role="search" action="SearchViewServlet" method="GET">
+                    <form class="d-flex search-form" role="search" action="searchExam" method="GET">
                         <input class="form-control me-2 search-bar" type="search" name="query" placeholder="Search Exams..." aria-label="Search">
                         <button class="btn btn-outline-success submit-button btn-black" type="submit">
                             <i class="fas fa-search"></i>
@@ -61,7 +61,7 @@ System.out.println("currentPage :" + currentPage);
                         <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li>
                         <div class="dropdown-divider"></div>
                         <li>
-                            <form action="LogoutServlet" method="post" style="display: inline;">
+                            <form action="logout" method="post" style="display: inline;">
                                 <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt"></i> Log out</button>
                             </form>
                         </li>

@@ -6,6 +6,8 @@
 <%@ page import="java.util.List"%>
 <%@ page import="java.sql.SQLException"%>
 <%@ page import= "java.util.ArrayList" %>
+<%@ page import="org.springframework.web.context.WebApplicationContext"%>
+<%@ page import="org.springframework.web.context.support.WebApplicationContextUtils"%>
 
 
 <!DOCTYPE html>
@@ -295,7 +297,9 @@ padding: 6px;
     int roleId = userDetails != null ? userDetails.getRoleId() : 1;
     int examId = 0;
     List<Exam> exams = (List<Exam>) session.getAttribute("exams");
-    List<Integer> appliedExams = (List<Integer>) session.getAttribute("appliedExams");
+    WebApplicationContext context = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
+    ExamSeatingImpl examSeatingImpl = (ExamSeatingImpl) context.getBean("examSeatingImpl");
+    List<Integer> appliedExams = examSeatingImpl.getExamIdsForUser(userDetails.getRollNo());
     %>
 
     <div id="alertMessage" class="alert" role="alert"></div>
@@ -371,7 +375,7 @@ padding: 6px;
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="updateExamForm" action="UpdateExamServlet" method="post">
+                    <form id="updateExamForm" action="updateExamDetails" method="post">
                         <input type="hidden" id="examIdInput" name="examId">
                         <div class="form-group">
                             <label for="examName">Exam Name</label>
@@ -419,7 +423,7 @@ padding: 6px;
                 $("#examIdInput").val(examId);
 
                 $.ajax({
-                    url: "GetExamDetailsServlet",
+                    url: "/getExamDetails",
                     method: "GET",
                     data: { examId: examId },
                     success: function(response) {
@@ -431,6 +435,7 @@ padding: 6px;
                     }
                 });
             });
+
 
             var message = "<%= request.getParameter("message") %>";
             var type = "<%= request.getParameter("type") %>";
@@ -534,7 +539,7 @@ padding: 6px;
             $(document).ready(function() {
                 $("#showAllExamsBtn").click(function() {
                     $.ajax({
-                        url: "GetExamDetailsServlet",  
+                        url: "/loadAllExams",  
                         method: "POST",
                         success: function(response) {
                              location.reload();
