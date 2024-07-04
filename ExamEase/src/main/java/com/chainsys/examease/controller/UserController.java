@@ -1,8 +1,15 @@
 package com.chainsys.examease.controller;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,27 +17,40 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.multipart.MultipartFile;
 
-import com.chainsys.examease.dao.ExamSeatingImpl;
+import com.chainsys.examease.dao.ExamSeatAllocator;
+import com.chainsys.examease.dao.UserDAO;
 import com.chainsys.examease.encrypt.PasswordEncryption;
 import com.chainsys.examease.model.Exam;
+import com.chainsys.examease.model.ExamAllocatedLocation;
+import com.chainsys.examease.model.ExamLocation;
 import com.chainsys.examease.model.User;
+import com.google.gson.Gson;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 
 @Controller
 public class UserController {
 	
+	 private static final String PARAM_EXAM_ID = "examId";
+	 private static final String SESSION_ATTR_USER_DETAILS = "userDetails";
+
+	
 	@Autowired
-	ExamSeatingImpl examSeatingImpl;
+	UserDAO userDAO;
 	
 	@Autowired
 	PasswordEncryption passwordEncryption;
 	
 	@Autowired
 	User user;
+	
+	@Autowired
+	ExamSeatAllocator examSeatAllocator;
 	
 
 	
@@ -43,9 +63,9 @@ public class UserController {
 		@PostMapping("/login")
 		public String userLogin(@RequestParam("email") String email, @RequestParam("password") String password,
 				HttpSession session, Model model) throws Exception {
-			if (examSeatingImpl.findUser(email, password, user, true)) {
+			if (userDAO.findUser(email, password, user, true)) {
 				session.setAttribute("userDetails", user);
-				session.setAttribute("exams", examSeatingImpl.getAllExams());
+				session.setAttribute("exams", userDAO.getAllExams());
 				//session.setAttribute("appliedExams", examSeatingImpl.getExamIdsForUser(user.getRollNo()));
 				return "redirect:/homePage.jsp";
 			} else {
@@ -58,14 +78,14 @@ public class UserController {
 	public String userRegister(@RequestParam("name") String name, @RequestParam("email") String email,
 			@RequestParam("password") String password, HttpSession session, Model model) throws Exception {
 
-		if (examSeatingImpl.findUser(email, password, user, false)) {
+		if (userDAO.findUser(email, password, user, false)) {
 			model.addAttribute("errorMessage", "Account already exists.");
 			return "registerPage.jsp";
 		} else {
-			examSeatingImpl.userRegistration(name, email, passwordEncryption.encrypt(password));
-			examSeatingImpl.findUser(email, password, user, false);
+			userDAO.userRegistration(name, email, passwordEncryption.encrypt(password));
+			userDAO.findUser(email, password, user, false);
 			session.setAttribute("userDetails", user);
-			session.setAttribute("exams", examSeatingImpl.getAllExams());
+			session.setAttribute("exams", userDAO.getAllExams());
 			return "redirect:/homePage.jsp";
 		}
 	}
@@ -73,7 +93,7 @@ public class UserController {
     @GetMapping("/getExamDetails")
     public ResponseEntity<String> getExamDetails(@RequestParam("examId") int examId) {
         try {
-            Exam examDetails = examSeatingImpl.getExamById(examId);
+            Exam examDetails = userDAO.getExamById(examId);
             if (examDetails != null) {
                 StringBuilder response = new StringBuilder();
                 response.append("<h2>").append(examDetails.getExamName()).append("</h2>")
@@ -92,22 +112,22 @@ public class UserController {
     
     @PostMapping("/loadAllExams")
     public String loadAllExams(Model model,HttpSession session) {
-            List<Exam> exams = examSeatingImpl.getAllExams();
+    	System.out.println("from load all exams controller");
+            List<Exam> exams = userDAO.getAllExams();
             session.setAttribute("exams", exams);
             return "redirect:/homePage.jsp"; 
     }
     
     @GetMapping("/searchExam")
-    public ModelAndView findExam(@RequestParam("query") String queryString, HttpSession session, Model model) {
-        ModelAndView modelAndView = new ModelAndView("homePage.jsp");
+    public String findExam(@RequestParam("query") String queryString, HttpSession session, Model model) {
         if (queryString != null && !queryString.isEmpty()) {
-            List<Exam> exams = examSeatingImpl.findExam(queryString);
+            List<Exam> exams = userDAO.findExam(queryString);
             session.setAttribute("exams", exams);
         } else {
             model.addAttribute("errorMessage", "Query string cannot be empty.");
         }
 
-        return modelAndView;
+        return "redirect:/homePage.jsp";
     }
     
     @PostMapping("/logout")
@@ -116,6 +136,181 @@ public class UserController {
             session.invalidate(); 
         }
         return "redirect:/login.jsp"; 
+    }
+    
+    @PostMapping("/uploadDoc")
+    public String handleDocumentUpload(@RequestParam("passportPhoto") MultipartFile passportPhoto,
+                                       @RequestParam("digitalSignature") MultipartFile digitalSignature,
+                                       @RequestParam("qualificationDocuments") MultipartFile qualificationDocuments,
+                                       HttpSession session,
+                                       Model model) throws IOException {
+
+    	user = (User) session.getAttribute(SESSION_ATTR_USER_DETAILS);
+        String examIdStr = (String) session.getAttribute(PARAM_EXAM_ID);
+        int examId = Integer.parseInt(examIdStr);
+
+        user.setPassportSizePhoto(passportPhoto.getBytes());
+        user.setDigitalSignature(digitalSignature.getBytes());
+        user.setQualificationDocuments(qualificationDocuments.getBytes());
+
+        session.setAttribute(SESSION_ATTR_USER_DETAILS, user);
+
+        return "redirect:/applicationPreview.jsp?examId=" + examId;
+    }
+
+    @PostMapping("/applyExam")
+    public String handleExamApplication(@RequestParam("full_name") String fullName,
+                                        @RequestParam("gender") String gender,
+                                        @RequestParam("dob") String dobString,
+                                        @RequestParam("qualification") String qualification,
+                                        @RequestParam("address") String address,
+                                        @RequestParam("native_city") String nativeCity,
+                                        @RequestParam("state") String state,
+                                        @RequestParam("aadhar_number") String aadharNumber,
+                                        @RequestParam("city_preference_1") String cityPreference1,
+                                        @RequestParam("city_preference_2") String cityPreference2,
+                                        @RequestParam("city_preference_3") String cityPreference3,
+                                        @RequestParam(PARAM_EXAM_ID) String examId,
+                                        HttpSession session) throws ParseException {
+
+    	user = (User) session.getAttribute(SESSION_ATTR_USER_DETAILS);
+        if (user == null) {
+        	user = new User();
+        }
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        java.util.Date dob =  dateFormat.parse(dobString);
+
+        user.setName(fullName);
+        user.setGender(gender.charAt(0));
+        user.setDob(dob);
+        user.setQualification(qualification);
+        user.setAddress(address);
+        user.setNativeCity(nativeCity);
+        user.setState(state);
+        user.setAadharNumber(aadharNumber);
+        user.setCityPreference1(cityPreference1);
+        user.setCityPreference2(cityPreference2);
+        user.setCityPreference3(cityPreference3);
+
+        session.setAttribute(SESSION_ATTR_USER_DETAILS, user);
+        session.setAttribute(PARAM_EXAM_ID, examId);
+
+        return "redirect:/documentsUploadPage.jsp?examId=" + examId;
+    }
+
+    @PostMapping("/updateDoc")
+    public String handleUpdateDocuments(@RequestParam("updatePassportPhoto") MultipartFile passportPhotoPart,
+                                        @RequestParam("updateDigitalSignature") MultipartFile digitalSignaturePart,
+                                        @RequestParam("updateQualificationDocuments") MultipartFile qualificationDocumentsPart,
+                                        HttpSession session,
+                                        Model model) throws IOException {
+    	System.out.println("in updateDoc page");
+
+    	user = (User) session.getAttribute(SESSION_ATTR_USER_DETAILS);
+        String examIdStr = (String) session.getAttribute(PARAM_EXAM_ID);
+        int examId = Integer.parseInt(examIdStr);
+
+        if (passportPhotoPart != null && !passportPhotoPart.isEmpty()) {
+        	user.setPassportSizePhoto(passportPhotoPart.getBytes());
+        }
+        if (digitalSignaturePart != null && !digitalSignaturePart.isEmpty()) {
+        	user.setDigitalSignature(digitalSignaturePart.getBytes());
+        }
+        if (qualificationDocumentsPart != null && !qualificationDocumentsPart.isEmpty()) {
+        	user.setQualificationDocuments(qualificationDocumentsPart.getBytes());
+        }
+
+        session.setAttribute(SESSION_ATTR_USER_DETAILS, user);
+
+        if (userDAO.updateExamDoc(user)) {
+            return "redirect:/applicationPreview.jsp?examId=" + examId;
+        }
+
+        return "errorPage"; 
+    }
+
+    @PostMapping("/submitDetails")
+    public String handleSubmitDetails(HttpSession session, Model model) throws ClassNotFoundException {
+        User details = (User) session.getAttribute(SESSION_ATTR_USER_DETAILS);
+        String examIdStr = (String) session.getAttribute(PARAM_EXAM_ID);
+        int examId = Integer.parseInt(examIdStr);
+        String appId = examIdStr + details.getRollNo();
+
+        byte[] passportPhoto = details.getPassportSizePhoto();
+        byte[] digitalSignature = details.getDigitalSignature();
+        byte[] qualificationDocuments = details.getQualificationDocuments();
+
+        if (!userDAO.getExamDocById(details)) {
+            if (userDAO.addUserDetails(details, appId) == 1 && userDAO.addUserDocument(details.getRollNo(), passportPhoto, digitalSignature, qualificationDocuments) == 1) {
+            	examSeatAllocator.allocateSeats(details, examId);
+                return "redirect:/homePage.jsp?message=examAppliedSuccessfully";
+            } else {
+                return "redirect:/homePage.jsp?message=examApplicationUnSuccessful";
+            }
+        } else {
+            if (userDAO.addUserDetails(details, appId) == 1) {
+            	examSeatAllocator.allocateSeats(details, examId);
+                return "redirect:/homePage.jsp?message=examAppliedSuccessfully";
+            } else {
+                return "redirect:/homePage.jsp?message=examApplicationUnSuccessful";
+            }
+        }
+    }
+    
+    
+    @GetMapping("/document")
+    public void getDocument(
+            @RequestParam("type") String type, 
+            HttpServletRequest request, 
+            HttpServletResponse response) {
+        
+        HttpSession session = request.getSession();
+        User userDetail = (User) session.getAttribute("userDetails");
+
+        if (userDetail != null) {
+            InputStream inputStream = null;
+            String contentType = MediaType.IMAGE_JPEG_VALUE;
+
+            try {
+                switch (type) {
+                    case "passportPhoto":
+                        inputStream = new ByteArrayInputStream(userDetail.getPassportSizePhoto());
+                        break;
+                    case "digitalSignature":
+                        inputStream = new ByteArrayInputStream(userDetail.getDigitalSignature());
+                        break;
+                    case "qualificationDocuments":
+                        inputStream = new ByteArrayInputStream(userDetail.getQualificationDocuments());
+                        contentType = MediaType.APPLICATION_PDF_VALUE;
+                        break;
+                    default:
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        return;
+                }
+
+                if (inputStream != null) {
+                    response.setContentType(contentType);
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        response.getOutputStream().write(buffer, 0, bytesRead);
+                    }
+                }
+            } catch (IOException e) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            } 
+        } else {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        }
+    }
+    
+    @PostMapping("/fetchSeatAllocation")
+    public ResponseEntity<String> fetchSeatAllocation(@RequestParam int examId, @RequestParam int rollNo) {
+        ExamAllocatedLocation locationDetails = userDAO.getExamLocationDetails(rollNo, examId);
+		Gson gson = new Gson();
+		String jsonResponse = gson.toJson(locationDetails);
+		return ResponseEntity.ok(jsonResponse);
     }
  
 }

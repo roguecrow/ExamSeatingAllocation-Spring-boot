@@ -2,7 +2,7 @@
 	pageEncoding="ISO-8859-1"%>
 <%@ page import="com.chainsys.examease.model.User"%>
 <%@ page import="com.chainsys.examease.model.Exam"%>
-<%@ page import="com.chainsys.examease.dao.ExamSeatingImpl"%>
+<%@ page import="com.chainsys.examease.dao.UserDAO"%>
 <%@ page import="java.util.List"%>
 <%@ page import="java.sql.SQLException"%>
 <%@ page import= "java.util.ArrayList" %>
@@ -298,8 +298,8 @@ padding: 6px;
     int examId = 0;
     List<Exam> exams = (List<Exam>) session.getAttribute("exams");
     WebApplicationContext context = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
-    ExamSeatingImpl examSeatingImpl = (ExamSeatingImpl) context.getBean("examSeatingImpl");
-    List<Integer> appliedExams = examSeatingImpl.getExamIdsForUser(userDetails.getRollNo());
+    UserDAO userDAO = (UserDAO) context.getBean("userDAO");
+    List<Integer> appliedExams = userDAO.getExamIdsForUser(userDetails.getRollNo());
     %>
 
     <div id="alertMessage" class="alert" role="alert"></div>
@@ -538,8 +538,9 @@ padding: 6px;
             
             $(document).ready(function() {
                 $("#showAllExamsBtn").click(function() {
+                       console.log('from show all button');
                     $.ajax({
-                        url: "/loadAllExams",  
+                        url: "loadAllExams",  
                         method: "POST",
                         success: function(response) {
                              location.reload();
