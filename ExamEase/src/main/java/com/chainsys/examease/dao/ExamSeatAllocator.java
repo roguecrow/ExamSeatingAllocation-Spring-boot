@@ -14,6 +14,9 @@ public class ExamSeatAllocator {
 	@Autowired
 	UserDAO userDAO;
 	
+	@Autowired
+	ExamDAO examDAO;
+	
     public void allocateSeats(User details, int examId) throws ClassNotFoundException  {
 
         String cityPreference1 = details.getCityPreference1();
@@ -21,7 +24,7 @@ public class ExamSeatAllocator {
         String cityPreference3 = details.getCityPreference3();
         
         
-        List<ExamLocation> examLocations = userDAO.findExamLocationById(examId);
+        List<ExamLocation> examLocations = examDAO.findExamLocationById(examId);
         
         boolean seatAllocated = allocateSeatByCityPreference(examLocations, cityPreference1, details, examId);
         if (!seatAllocated) {
@@ -36,19 +39,19 @@ public class ExamSeatAllocator {
         }
     }
     
-    private boolean allocateSeatByCityPreference(List<ExamLocation> examLocations, String cityPreference, User details, int examId) throws ClassNotFoundException {
+    private boolean allocateSeatByCityPreference(List<ExamLocation> examLocations, String cityPreference, User details, int examId) {
+    	System.out.println("in allocatedSeats");
 
         for (ExamLocation location : examLocations) {
             if (location.getCity().equalsIgnoreCase(cityPreference) && location.getCapacity() > location.getFilledCapacity()) {
             	
                 location.setFilledCapacity(location.getFilledCapacity() + 1);
                 
-                int lastAllocatedSeat = userDAO.getLastAllocatedSeatId(location.getLocationId());
+                int lastAllocatedSeat = examDAO.getLastAllocatedSeatId(location.getLocationId());
                 
-                userDAO.updateCapacity(location.getLocationId(), location.getFilledCapacity());
+                examDAO.updateCapacity(location.getLocationId(), location.getFilledCapacity());
                 
-                
-                userDAO.addExamSeating(details.getRollNo(), examId, location.getLocationId(),
+                examDAO.addExamSeating(details.getRollNo(), examId, location.getLocationId(),
                 		seatNoGenerator(location.getLocationId(), location.getCity(), location.getVenueName(), location.getHallName(), lastAllocatedSeat + 1), lastAllocatedSeat + 1);
                 return true;
             }
@@ -56,19 +59,19 @@ public class ExamSeatAllocator {
         return false;
     }
     
-    private boolean allocateSeatInAnyAvailableCity(List<ExamLocation> examLocations, User details, int examId) throws ClassNotFoundException {
-
+    private boolean allocateSeatInAnyAvailableCity(List<ExamLocation> examLocations, User details, int examId) {
+    	System.out.println("In Seat Availabilty");
         for (ExamLocation location : examLocations) {
             if (location.getCapacity() > location.getFilledCapacity()) {
                 
                 location.setFilledCapacity(location.getFilledCapacity() + 1);
                 
-                int lastAllocatedSeat = userDAO.getLastAllocatedSeatId(location.getLocationId());
+                int lastAllocatedSeat = examDAO.getLastAllocatedSeatId(location.getLocationId());
                 
-                userDAO.updateCapacity(location.getLocationId(), location.getFilledCapacity());
+                examDAO.updateCapacity(location.getLocationId(), location.getFilledCapacity());
                 
                 
-                userDAO.addExamSeating(details.getRollNo(), examId, location.getLocationId(),
+                examDAO.addExamSeating(details.getRollNo(), examId, location.getLocationId(),
                 		seatNoGenerator(location.getLocationId(), location.getCity(), location.getVenueName(), location.getHallName(), lastAllocatedSeat + 1), lastAllocatedSeat + 1);
                 return true;
             }

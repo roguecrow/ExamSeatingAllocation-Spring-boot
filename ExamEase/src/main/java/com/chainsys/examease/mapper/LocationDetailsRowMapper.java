@@ -38,7 +38,7 @@ public class LocationDetailsRowMapper implements RowMapper<ExamAllocatedLocation
         String locationUrl = rs.getString(COLUMN_LOCATION_URL);
         int filledCapacity = rs.getInt(COLUMN_FILLED_CAPACITY);
         String serialNo = rs.getString(COLUMN_SERIAL_NO);
-
+        System.out.println("in Exam AllocatedLoaction");
         return new ExamAllocatedLocation(allocatedSeat, locationId, city, venueName, hallName, totalCapacity, address, locationUrl, examId, filledCapacity, serialNo);
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.chainsys.examease.dao.ExamDAO;
 import com.chainsys.examease.dao.UserDAO;
 import com.chainsys.examease.model.User;
 
@@ -29,6 +30,8 @@ public class AdminController {
 	@Autowired
 	User user;
 	
+	@Autowired
+	ExamDAO examDAO;
 
 	
     @PostMapping("/updateExamDetails")
@@ -40,7 +43,7 @@ public class AdminController {
             Model model) {
 
         int examId = Integer.parseInt(examIdStr); 
-        userDAO.updateExamDetails(examId, Date.valueOf(examDate), Date.valueOf(applicationStart), Date.valueOf(applicationEnd));
+        examDAO.updateExamDetails(examId, Date.valueOf(examDate), Date.valueOf(applicationStart), Date.valueOf(applicationEnd));
         return "redirect:/homePage.jsp?message=examUpdatedSuccessfully&type=success";
     }
     
@@ -63,7 +66,7 @@ public class AdminController {
                 return modelAndView;
             }
         }
-        session.setAttribute("exams", userDAO.getAllExams());
+        session.setAttribute("exams", examDAO.getAllExams());
         modelAndView.setViewName(HOME_PAGE_SUCCESS);
         return modelAndView;
     }
@@ -79,7 +82,7 @@ public class AdminController {
         int affectedRows = userDAO.addLocationToExam(city, venueName, hallName, capacity, address, locationUrl, examId);
 
         if (affectedRows != 1) {
-            userDAO.deleteExam(examId);
+        	examDAO.deleteExam(examId);
             return false;
         }
         return true;

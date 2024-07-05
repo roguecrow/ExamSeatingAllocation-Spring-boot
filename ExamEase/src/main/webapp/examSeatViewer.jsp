@@ -232,19 +232,21 @@
                 method: 'POST',
                 data: { examId: examId, rollNo: <%= userDetails.getRollNo() %> },
                 success: function(response) {
+                	var locationDetails = JSON.parse(response);
                     var seatGrid = $("#seat-grid");
                     seatGrid.empty();
-
-                    var totalCapacity = response.totalCapacity;
-                    var allocatedSeat = response.allocatedSeat;
-                    var venueName = response.venueName;
-                    var hallName = response.hallName;
-                    var serialNo = response.serialNo; 
-                    var locationUrl = response.locationUrl;
+                    console.log(response);
+                    console.log(locationDetails.totalCapacity);
+                    var totalCapacity = locationDetails.totalCapacity;
+                    var allocatedSeat = locationDetails.allocatedSeat;
+                    var venueName = locationDetails.venueName;
+                    var hallName = locationDetails.hallName;
+                    var serialNo = locationDetails.serialNo; 
+                    var locationUrl = locationDetails.locationUrl;
 
                     var rows = Math.ceil(Math.sqrt(totalCapacity));
                     var columns = Math.ceil(totalCapacity / rows);
-
+                    console.log(totalCapacity , allocatedSeat, venueName, hallName ,serialNo, locationUrl);
                     seatGrid.css('grid-template-rows', 'repeat(' + rows + ', 1fr)');
                     seatGrid.css('grid-template-columns', 'repeat(' + columns + ', 1fr)');
 

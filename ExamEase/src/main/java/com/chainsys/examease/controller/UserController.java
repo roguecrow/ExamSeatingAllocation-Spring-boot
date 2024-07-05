@@ -6,9 +6,17 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -19,7 +27,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.chainsys.examease.dao.ExamDAO;
 import com.chainsys.examease.dao.ExamSeatAllocator;
+import com.chainsys.examease.dao.HallTicketGenerator;
 import com.chainsys.examease.dao.UserDAO;
 import com.chainsys.examease.encrypt.PasswordEncryption;
 import com.chainsys.examease.model.Exam;
@@ -27,6 +37,8 @@ import com.chainsys.examease.model.ExamAllocatedLocation;
 import com.chainsys.examease.model.ExamLocation;
 import com.chainsys.examease.model.User;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.itextpdf.text.DocumentException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -52,7 +64,12 @@ public class UserController {
 	@Autowired
 	ExamSeatAllocator examSeatAllocator;
 	
-
+	@Autowired
+	HallTicketGenerator hallTicketGenerator;
+	
+	@Autowired
+	ExamDAO examDAO;
+	
 	
 	@RequestMapping("/")
 	public String home() {
@@ -65,7 +82,7 @@ public class UserController {
 				HttpSession session, Model model) throws Exception {
 			if (userDAO.findUser(email, password, user, true)) {
 				session.setAttribute("userDetails", user);
-				session.setAttribute("exams", userDAO.getAllExams());
+				session.setAttribute("exams", examDAO.getAllExams());
 				//session.setAttribute("appliedExams", examSeatingImpl.getExamIdsForUser(user.getRollNo()));
 				return "redirect:/homePage.jsp";
 			} else {
@@ -85,7 +102,7 @@ public class UserController {
 			userDAO.userRegistration(name, email, passwordEncryption.encrypt(password));
 			userDAO.findUser(email, password, user, false);
 			session.setAttribute("userDetails", user);
-			session.setAttribute("exams", userDAO.getAllExams());
+			session.setAttribute("exams", examDAO.getAllExams());
 			return "redirect:/homePage.jsp";
 		}
 	}
@@ -93,14 +110,17 @@ public class UserController {
     @GetMapping("/getExamDetails")
     public ResponseEntity<String> getExamDetails(@RequestParam("examId") int examId) {
         try {
-            Exam examDetails = userDAO.getExamById(examId);
+            Exam examDetails = examDAO.getExamById(examId);
             if (examDetails != null) {
+            	 String examDate = formatDate(examDetails.getExamDate());
+                 String applicationStartDate = formatDate(examDetails.getApplicationStartDate());
+                 String applicationEndDate = formatDate(examDetails.getApplicationEndDate());
                 StringBuilder response = new StringBuilder();
                 response.append("<h2>").append(examDetails.getExamName()).append("</h2>")
-                        .append("<p><strong>Description:</strong> ").append(examDetails.getDescription()).append("</p>")
-                        .append("<p><strong>Exam Date:</strong> ").append(examDetails.getExamDate()).append("</p>")
-                        .append("<p><strong>Application Start Date:</strong> ").append(examDetails.getApplicationStartDate()).append("</p>")
-                        .append("<p><strong>Application End Date:</strong> ").append(examDetails.getApplicationEndDate()).append("</p>");
+                .append("<p><strong>Description:</strong> ").append(examDetails.getDescription()).append("</p>")
+                .append("<p><strong>Exam Date:</strong> ").append(examDate).append("</p>")
+                .append("<p><strong>Application Start Date:</strong> ").append(applicationStartDate).append("</p>")
+                .append("<p><strong>Application End Date:</strong> ").append(applicationEndDate).append("</p>");
                 return ResponseEntity.ok(response.toString());
             } else {
                 return ResponseEntity.ok("<p>No exam found with ID: " + examId + "</p>");
@@ -110,10 +130,16 @@ public class UserController {
         }
     }
     
+    private String formatDate(Date date) {
+        LocalDate localDate = Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
+        return localDate.format(formatter);
+    }
+    
     @PostMapping("/loadAllExams")
     public String loadAllExams(Model model,HttpSession session) {
     	System.out.println("from load all exams controller");
-            List<Exam> exams = userDAO.getAllExams();
+            List<Exam> exams = examDAO.getAllExams();
             session.setAttribute("exams", exams);
             return "redirect:/homePage.jsp"; 
     }
@@ -121,7 +147,7 @@ public class UserController {
     @GetMapping("/searchExam")
     public String findExam(@RequestParam("query") String queryString, HttpSession session, Model model) {
         if (queryString != null && !queryString.isEmpty()) {
-            List<Exam> exams = userDAO.findExam(queryString);
+            List<Exam> exams = examDAO.findExam(queryString);
             session.setAttribute("exams", exams);
         } else {
             model.addAttribute("errorMessage", "Query string cannot be empty.");
@@ -241,7 +267,7 @@ public class UserController {
         byte[] digitalSignature = details.getDigitalSignature();
         byte[] qualificationDocuments = details.getQualificationDocuments();
 
-        if (!userDAO.getExamDocById(details)) {
+        if (!examDAO.getExamDocById(details)) {
             if (userDAO.addUserDetails(details, appId) == 1 && userDAO.addUserDocument(details.getRollNo(), passportPhoto, digitalSignature, qualificationDocuments) == 1) {
             	examSeatAllocator.allocateSeats(details, examId);
                 return "redirect:/homePage.jsp?message=examAppliedSuccessfully";
@@ -307,10 +333,51 @@ public class UserController {
     
     @PostMapping("/fetchSeatAllocation")
     public ResponseEntity<String> fetchSeatAllocation(@RequestParam int examId, @RequestParam int rollNo) {
-        ExamAllocatedLocation locationDetails = userDAO.getExamLocationDetails(rollNo, examId);
+        ExamAllocatedLocation locationDetails = examDAO.getExamLocationDetails(rollNo, examId);
+        System.out.println("allocated seat : "+locationDetails.getAllocatedSeat());
 		Gson gson = new Gson();
 		String jsonResponse = gson.toJson(locationDetails);
+		System.out.println("jsonResponse" +jsonResponse);
 		return ResponseEntity.ok(jsonResponse);
+    }
+    
+    @PostMapping("/getHallTicket")
+    public ResponseEntity<String> getHallTicket(@RequestParam String serialNumber) {
+        try {
+            String examDetailsJson = examDAO.getExamDetails(serialNumber);
+            if (examDetailsJson != null) {
+            	System.out.println("examDetailsJson --" + examDetailsJson);
+                return ResponseEntity.ok(examDetailsJson);
+            } else {
+                JsonObject errorResponse = new JsonObject();
+                errorResponse.addProperty("error", "No hall ticket found for the given serial number.");
+                return ResponseEntity.status(404).body(errorResponse.toString());
+            }
+        } catch (Exception e) {
+            JsonObject errorResponse = new JsonObject();
+            errorResponse.addProperty("error", "Database access error: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse.toString());
+        }
+    }
+    
+    @GetMapping("/downloadHallTicket")
+    public ResponseEntity<byte[]> downloadHallTicket(@RequestParam("serialNumber") String serialNumber) throws DocumentException, IOException {
+        JSONObject data;
+        String jsonString = examDAO.getExamDetails(serialNumber);
+		if (jsonString != null) {
+		    data = new JSONObject(jsonString);
+		} else {
+		    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+		            .body(("Exam details not found for the given se rial number.").getBytes());
+		}
+
+        byte[] hallTicketContent = hallTicketGenerator.generateHallTicket(data, serialNumber);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "hall_ticket_" + serialNumber + ".pdf");
+
+        return new ResponseEntity<>(hallTicketContent, headers, HttpStatus.OK);
     }
  
 }

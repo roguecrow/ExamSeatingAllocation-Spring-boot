@@ -10,4 +10,3 @@ public class ExamEaseApplication {
 		SpringApplication.run(ExamEaseApplication.class, args);
 	}
 }
- 

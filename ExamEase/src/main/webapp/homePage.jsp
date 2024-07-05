@@ -8,6 +8,7 @@
 <%@ page import= "java.util.ArrayList" %>
 <%@ page import="org.springframework.web.context.WebApplicationContext"%>
 <%@ page import="org.springframework.web.context.support.WebApplicationContextUtils"%>
+<%@ page import="java.util.Date"%>
 
 
 <!DOCTYPE html>
@@ -273,6 +274,10 @@ body {
 .badge {
 padding: 6px;
 }
+.badge-space {
+    margin-right: 5px;
+}
+
 
 </style>
 
@@ -315,8 +320,9 @@ padding: 6px;
                 if (exams != null && !exams.isEmpty()) {
                     for (Exam exam : exams) {
                         boolean isApplied = appliedExams.contains(exam.getExamId());
+                        boolean isExpired = (exam.getApplicationEndDate().before(new Date()));
                 %>
-                <div class="card <%= isApplied ? "applied-exam" : "" %>" id="exam<%=exam.getExamId()%>">
+                <div class="card <%= isApplied ? "applied-exam" : "" %> <%= isExpired ? "expired-exam" : "" %>" id="exam<%=exam.getExamId()%>">
                     <div class="card-body">
                         <div>
                             <h5 class="card-title"><%=exam.getExamName()%></h5>
@@ -338,7 +344,10 @@ padding: 6px;
                         }
                         %>
                         <% if (isApplied) { %>
-                        <span class="badge badge-success">Applied</span>
+                        <span class="badge badge-success badge-space">Applied</span>
+                        <% } %>
+                        <% if (isExpired) { %>
+                        <span class="badge badge-secondary">Ended</span>
                         <% } %>
                     </div>
                 </div>
@@ -358,7 +367,8 @@ padding: 6px;
                     <h2>Exam Details</h2>
                     <p>Select an exam to view details.</p>
                 </div>
-                <% if (roleId != 0) { %>
+                <% if (roleId != 0) { 
+                %>
                 <a id="applyNowButton" href="#" class="btn btn-primary btn-lg apply-now-button">Apply Now</a>
                 <% } %>
             </div>
@@ -409,12 +419,14 @@ padding: 6px;
     <script>
         $(function() {
             $("#nav-placeholder").load("navbar.jsp");
-            
+            $("#applyNowButton").hide();
             $(".card").click(function() {
                 var examId = $(this).attr("id").substring(4);
                 console.log(examId);
                 var isApplied = $(this).hasClass("applied-exam");
-                if (isApplied) {
+                var isExpired = $(this).hasClass("expired-exam");
+                
+                if (isApplied || isExpired) {
                     $("#applyNowButton").hide();
                 } else {
                     $("#applyNowButton").attr("href", "applyExam.jsp?examId=" + examId).show();

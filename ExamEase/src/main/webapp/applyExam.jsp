@@ -167,7 +167,9 @@ System.out.println("from applyExam page = "+cities);
                                 <option value="Master of Arts (M.A)">Master of Arts (M.A)</option>
                                 <option value="Master of Business Administration (M.B.A)">Master of Business Administration (M.B.A)</option>
                                 <option value="Doctor of Philosophy (Ph.D)">Doctor of Philosophy (Ph.D)</option>
+                                <option value="Others">Others</option>
                             </select>
+                             <div id="qualification-input-container" style="margin-top: 10px;"></div>
                     </div>
 						<div class="mb-3">
                         <label for="address" class="form-label">Address</label>
@@ -296,6 +298,28 @@ System.out.println("from applyExam page = "+cities);
             }
         }
     });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const qualificationDropdown = document.getElementById('qualification');
+        const qualificationInputContainer = document.getElementById('qualification-input-container');
+
+        qualificationDropdown.addEventListener('change', function() {
+            if (this.value === 'Others') {
+                const inputField = document.createElement('input');
+                inputField.type = 'text';
+                inputField.className = 'form-control';
+                inputField.id = 'qualificationInput';
+                inputField.name = 'qualification';
+                inputField.placeholder = 'Please specify your qualification';
+                inputField.required = true;
+
+                qualificationDropdown.style.display = 'none';
+                qualificationInputContainer.innerHTML = '';
+                qualificationInputContainer.appendChild(inputField);
+            }
+        });
+    });
+
     
     const cityPreference1 = document.getElementById('cityPreference1');
     const cityPreference2 = document.getElementById('cityPreference2');
