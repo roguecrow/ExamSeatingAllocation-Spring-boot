@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
     pageEncoding="ISO-8859-1"%>
 <%@ page import="com.chainsys.examease.model.Exam"%>
-<%@ page import="com.chainsys.examease.dao.UserDAO"%>
+<%@ page import="com.chainsys.examease.dao.ExamDAO"%>
 <%@ page import="org.springframework.web.context.WebApplicationContext"%>
 <%@ page import="org.springframework.web.context.support.WebApplicationContextUtils"%>
 <%@ page import="java.util.List"%>
@@ -101,10 +101,10 @@ String examName = "";
 String examDate = "";
 int examId = Integer.parseInt(examIdParam);
 WebApplicationContext context = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
-UserDAO userDAO = (UserDAO) context.getBean("userDAO");
+ExamDAO examDAO = (ExamDAO) context.getBean("examDAO");
 if (examIdParam != null && !examIdParam.isEmpty()) {
 	try {
-		Exam examDetail = userDAO.getExamById(examId);
+		Exam examDetail = examDAO.getExamById(examId);
 		if (examDetail != null) {
 	examName = examDetail.getExamName();
 	examDate = examDetail.getExamDate().toString();
@@ -114,7 +114,7 @@ if (examIdParam != null && !examIdParam.isEmpty()) {
 	}
 }
 
-List<String> cities = userDAO.getCityLocationsForExam(examId);
+List<String> cities = examDAO.getCityLocationsForExam(examId);
 System.out.println("from applyExam page = "+cities);
 %>
 

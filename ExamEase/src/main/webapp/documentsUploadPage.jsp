@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
     pageEncoding="ISO-8859-1"%>
 <%@ page import="com.chainsys.examease.model.User"%>
-<%@ page import="com.chainsys.examease.dao.UserDAO"%>
+<%@ page import="com.chainsys.examease.dao.ExamDAO"%>
 <%@ page import="java.util.Base64"%>
 <%@ page import="org.springframework.web.context.WebApplicationContext"%>
 <%@ page import="org.springframework.web.context.support.WebApplicationContextUtils"%>
@@ -81,8 +81,8 @@
 <%
 User userDetail = (User) session.getAttribute("userDetails");
 WebApplicationContext context = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
-UserDAO userDAO = (UserDAO) context.getBean("userDAO");
-boolean docExists = userDAO.getExamDocById(userDetail);
+ExamDAO examDAO = (ExamDAO) context.getBean("examDAO");
+boolean docExists = examDAO.getExamDocById(userDetail);
 session.setAttribute("userDetails",userDetail);
 String examId = request.getParameter("examId");
 %>

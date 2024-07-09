@@ -12,6 +12,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,6 +38,7 @@ import com.chainsys.examease.model.Exam;
 import com.chainsys.examease.model.ExamAllocatedLocation;
 import com.chainsys.examease.model.ExamLocation;
 import com.chainsys.examease.model.User;
+import com.chainsys.examease.model.UserQuery;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.itextpdf.text.DocumentException;
@@ -379,5 +382,69 @@ public class UserController {
 
         return new ResponseEntity<>(hallTicketContent, headers, HttpStatus.OK);
     }
- 
+
+    @PostMapping("/SendExamQuries")
+    public String sendQuries( 
+    		@RequestParam("userName") String userName,
+            @RequestParam("userEmail") String userEmail,
+            @RequestParam("issueType") String issueType,
+            @RequestParam("message") String message,HttpSession session) {
+    	
+    	User userDetails = (User) session.getAttribute("userDetails");
+    	userDetails.getRollNo();
+    	 if(userDAO.addUserQuery(userDetails.getRollNo(),userName,userEmail,issueType,message)){
+    		 return "redirect:/help.jsp?message=submittedSuccessfully";
+    	 }
+    	 else {
+    		 return "redirect:/help.jsp?message=pleaseTryAgainLater";
+    	 }
+    }
+    
+    @PostMapping("/examQueries")
+    public ResponseEntity<String> getExamQueries(HttpSession session) {
+        User userDetails = (User) session.getAttribute("userDetails");
+        List<UserQuery> queries = userDAO.findUserQueries(userDetails.getRollNo());
+        Gson gson = new Gson();
+        String queriesJsonResponse = gson.toJson(queries);
+        System.out.println("queriesJsonResponse --" +queriesJsonResponse);
+        return ResponseEntity.ok(queriesJsonResponse);
+    }
+    
+    @PostMapping("/adminFetchQueries")
+    public ResponseEntity<String> getAllExamQueries(HttpSession session) {
+        List<UserQuery> queries = userDAO.findAdminQueries();
+        Gson gson = new Gson();
+        String queriesJsonResponse = gson.toJson(queries);
+        System.out.println("queriesJsonResponse --" +queriesJsonResponse);
+        return ResponseEntity.ok(queriesJsonResponse);
+    }
+    
+    @PostMapping("/submitReply")
+    public ResponseEntity<String> submitReply(@RequestBody Map<String, String> payload) {
+    	System.out.println("in submitReply");
+        String queryId = payload.get("id");
+        String replyText = payload.get("reply");
+
+        try {
+        	if(userDAO.updateAdminReply(Integer.parseInt(queryId), replyText)) {
+        		System.out.println("on success");
+                return ResponseEntity.ok("Reply submitted successfully!");
+        	}
+        	else {
+        		System.out.println("on failure");
+        		return ResponseEntity.ok("Failed to Submit!");
+        	}
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to submit reply. Please try again later.");
+        }
+    }
+    
+    @PostMapping("/fetchAppliedUsers")
+    public ResponseEntity<String> fetchAppliedUsers(@RequestParam("examId") int examId) {
+        List<User> users = userDAO.findUsersByExamId(examId);
+        Gson gson = new Gson();
+        String usersJsonResponse = gson.toJson(users);
+        System.out.println("queriesJsonResponse --" +usersJsonResponse);
+        return ResponseEntity.ok(usersJsonResponse);
+    }
 }

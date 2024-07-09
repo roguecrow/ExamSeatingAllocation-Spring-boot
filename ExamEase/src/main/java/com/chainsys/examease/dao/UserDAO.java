@@ -9,6 +9,7 @@ import com.chainsys.examease.model.Exam;
 import com.chainsys.examease.model.ExamAllocatedLocation;
 import com.chainsys.examease.model.ExamLocation;
 import com.chainsys.examease.model.User;
+import com.chainsys.examease.model.UserQuery;
 
 @Repository
 //public interface UserDAO {
@@ -44,5 +45,11 @@ public interface UserDAO {
     boolean updateExamDoc(User details);
     int addUserDetails(User details, String appId);
     int addUserDocument(int rollNo, byte[] passportPhoto, byte[] digitalSignature, byte[] qualificationDocuments);
+	public boolean addUserQuery(int rollNo,String userName, String userEmail, String issueType, String message);
+	public List<UserQuery> findUserQueries(int rollNo);
+	public List<UserQuery> findAdminQueries();
+	public boolean updateAdminReply(int queryId, String adminReply);
+    List<User> findUsersByExamId(int examId);
+
 }
 

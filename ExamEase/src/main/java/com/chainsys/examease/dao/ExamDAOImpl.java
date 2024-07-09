@@ -1,6 +1,8 @@
 package com.chainsys.examease.dao;
 
+import java.lang.reflect.Array;
 import java.sql.ResultSet;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
@@ -19,6 +21,7 @@ import com.chainsys.examease.model.Exam;
 import com.chainsys.examease.model.ExamAllocatedLocation;
 import com.chainsys.examease.model.ExamLocation;
 import com.chainsys.examease.model.User;
+import com.chainsys.examease.validator.UserValidation;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -28,6 +31,7 @@ public class ExamDAOImpl implements ExamDAO {
 	
 	@Autowired
 	JdbcTemplate jdbcTemplate;
+	
 	
 	private static final String COLUMN_ROLL_NO = "roll_no";
 	private static final String COLUMN_EXAM_ID = "exam_id";
@@ -55,7 +59,7 @@ public class ExamDAOImpl implements ExamDAO {
 
 		return jdbcTemplate.queryForObject(getExamQuery, new ExamDetailsRowMapper(), examId);
 	}
-
+	
 	public List<String> getCityLocationsForExam(int examId) {
 		String getCitiesQuery = "SELECT DISTINCT city FROM exam_locations WHERE exam_id = ?";
 		return jdbcTemplate.query(getCitiesQuery, (resultSet, rowNum) -> resultSet.getString("city"), examId);

@@ -40,6 +40,17 @@ System.out.println("currentPage :" + currentPage);
                         <a class="nav-link active" aria-current="page" href="help.jsp">Help</a>
                     </li>
                     <% } %>
+                    <% if (roleId == 0) { %>
+                      <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Services
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="servicesDropdown">
+                            <li><a class="dropdown-item" href="viewUserQueries.jsp">View User Queries</a></li>
+                            <li><a class="dropdown-item" href="viewAppliedUsers.jsp">View Applied Users</a></li>
+                        </ul>
+                    </li>
+                    <% } %>
                     <% if ("homePage".equals(currentPage)) { %>
                     <form class="d-flex search-form" role="search" action="searchExam" method="GET">
                         <input class="form-control me-2 search-bar" type="search" name="query" placeholder="Search Exams..." aria-label="Search">

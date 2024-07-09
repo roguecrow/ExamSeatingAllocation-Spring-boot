@@ -17,6 +17,7 @@ import com.chainsys.examease.model.Exam;
 import com.chainsys.examease.model.ExamAllocatedLocation;
 import com.chainsys.examease.model.ExamLocation;
 import com.chainsys.examease.model.User;
+import com.chainsys.examease.model.UserQuery;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.chainsys.examease.encrypt.PasswordEncryption;
@@ -27,6 +28,10 @@ import com.chainsys.examease.mapper.ExamDetailsRowMapper;
 import com.chainsys.examease.mapper.GetUserDocRowMapper;
 import com.chainsys.examease.mapper.ExamLocationDetailsRowMapper;
 import com.chainsys.examease.mapper.LocationDetailsRowMapper;
+import com.chainsys.examease.mapper.UserQueryRowMapper;
+import com.chainsys.examease.mapper.UserFinderRowMapper;
+
+
 
 
 @Configuration
@@ -245,6 +250,14 @@ public class UserDAOImpl implements UserDAO {
 
 		return rowsAffected > 0;
 	}
+	
+	 public boolean addUserQuery(int rollNo,String userName, String userEmail, String issueType, String message) {
+	        String insertQuery = "INSERT INTO user_queries (roll_no, name, email, issue_type, message) VALUES (?, ?, ?, ?, ?)";
+
+	        int rowsAffected = jdbcTemplate.update(insertQuery,rollNo,userName,userEmail,issueType,message);
+
+	        return rowsAffected > 0;
+	    }
     
 	 public String getExamDetails(String serialNo) {
 	        String getExamDetails = "SELECT " +
@@ -316,6 +329,31 @@ public class UserDAOImpl implements UserDAO {
 
 	    private String encodeToBase64(byte[] data) {
 	        return Base64.getEncoder().encodeToString(data);
+	    }
+	    
+	    public List<UserQuery> findUserQueries(int rollNo) {
+	        String findQueries = "SELECT query_id, roll_no, name, email, issue_type, message, admin_reply, is_closed FROM user_queries WHERE roll_no = ?";
+	        return jdbcTemplate.query(findQueries, new UserQueryRowMapper(), rollNo);
+	    }
+	    
+	    public List<UserQuery> findAdminQueries() {
+	        String findQueries = "SELECT query_id, roll_no, name, email, issue_type, message, admin_reply, is_closed FROM user_queries";
+	        return jdbcTemplate.query(findQueries, new UserQueryRowMapper());
+	    }
+	    
+	    public boolean updateAdminReply(int queryId, String adminReply) {
+	    	System.out.println("in updateAdminreply method");
+	        String updateQueries = "UPDATE user_queries " +
+	                     "SET admin_reply = ?, reply_timestamp = NOW(), is_closed = TRUE " +
+	                     "WHERE query_id = ?";
+
+	        int rowsAffected = jdbcTemplate.update(updateQueries, adminReply, queryId);
+	        return rowsAffected > 0;
+	    }
+	    
+	    public List<User> findUsersByExamId(int examId) {
+	    	String userFinderForExam = "SELECT * FROM users WHERE exam_id = ?";
+	        return jdbcTemplate.query(userFinderForExam,new UserFinderRowMapper(), new Object[]{examId});
 	    }
 
 }
