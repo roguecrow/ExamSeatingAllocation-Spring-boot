@@ -9,13 +9,18 @@ import com.chainsys.examease.model.User;
 
 public class UserFinderRowMapper implements RowMapper<User>{
 	
-    @Override
+	@Override
     public User mapRow(ResultSet rs, int rowNum) throws SQLException {
         User user = new User();
-        user.setName(rs.getString("name"));
         user.setRollNo(rs.getInt("roll_no"));
-        user.setEmail(rs.getString("email"));
-        //user.setp(rs.getInt("phone"));
+        user.setName(rs.getString("name"));
+        user.setDob(rs.getDate("dob"));
+        user.setQualification(rs.getString("qualification"));
+        user.setGender(rs.getString("gender").charAt(0));
+        user.setAddress(rs.getString("address"));
+        user.setNativeCity(rs.getString("native_city"));
+        user.setState(rs.getString("state"));
+        user.setAadharNumber(rs.getString("aadhar_number"));
         return user;
     }
 

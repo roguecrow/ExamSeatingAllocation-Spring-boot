@@ -57,7 +57,6 @@
 </head>
 <body>
     <%! 
-        // Define the formatDate method
         String formatDate(Date date) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy");
             return dateFormat.format(date);

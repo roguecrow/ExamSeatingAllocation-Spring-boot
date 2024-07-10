@@ -1,7 +1,6 @@
 package com.chainsys.examease.dao;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
@@ -9,8 +8,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 
 import com.chainsys.examease.model.Exam;
@@ -47,20 +44,14 @@ public class UserDAOImpl implements UserDAO {
 	private static final String COLUMN_ROLL_NO = "roll_no";
 	private static final String COLUMN_EXAM_ID = "exam_id";
 	private static final String COLUMN_EXAM_NAME = "exam_name";
-	private static final String COLUMN_DESCRIPTION = "description";
 	private static final String COLUMN_EXAM_DATE = "exam_date";
-	private static final String COLUMN_APPLICATION_START_DATE = "application_start_date";
-	private static final String COLUMN_APPLICATION_END_DATE = "application_end_date";
 	private static final String COLUMN_LOCATION_ID = "location_id";
 	private static final String COLUMN_CITY = "city";
 	private static final String COLUMN_VENUE_NAME = "venue_name";
 	private static final String COLUMN_HALL_NAME = "hall_name";
-	private static final String COLUMN_TOTAL_CAPACITY = "total_capacity";
 	private static final String COLUMN_ADDRESS = "address";
 	private static final String COLUMN_LOCATION_URL = "location_url";
-	private static final String COLUMN_FILLED_CAPACITY = "filled_capacity";
 	private static final String COLUMN_ALLOCATED_SEAT = "allocated_seat";
-	private static final String COLUMN_SERIAL_NO = "serial_no";
 	private static final String COLUMN_PASSPORT_SIZE_PHOTO = "passport_size_photo";
 	private static final String COLUMN_DIGITAL_SIGNATURE = "digital_signature";
 	private static final String COLUMN_QUALIFICATION_DOCUMENTS = "qualification_documents";
@@ -68,19 +59,14 @@ public class UserDAOImpl implements UserDAO {
 	public int userRegistration(String fullName, String email, String password) {
 		String addUser = "INSERT INTO user_credentials (full_name, email, password) VALUES (?, ?, ?)";
 		Object[] userCredObj = { fullName, email, password };
-		int noOfRows = jdbcTemplate.update(addUser, userCredObj);
-		System.out.println("in save -" + noOfRows);
-		return noOfRows;
+		return jdbcTemplate.update(addUser, userCredObj);
 	}
 
 	public int createExam(String examName, String description, Date examDate, Date applicationStartDate,
 			Date applicationEndDate) {
-		System.out.println("in create Exam method");
 		String addExam = "INSERT INTO exams (exam_name, description, exam_date, application_start_date, application_end_date) VALUES (?, ?, ?, ?, ?)";
 		Object[] addExamObj = { examName, description, examDate, applicationStartDate, applicationEndDate };
-		int noOfRows = jdbcTemplate.update(addExam, addExamObj);
-		System.out.println("in save -" + noOfRows);
-		System.out.println("examId -" + getLastInsertedExamId());
+		jdbcTemplate.update(addExam, addExamObj);
 		return getLastInsertedExamId();
 	}
 
@@ -107,7 +93,6 @@ public class UserDAOImpl implements UserDAO {
 
 		if (!users.isEmpty()) {
 			User user = users.get(0);
-			System.out.println("From findUer - " + user.getPassword());
 			boolean passwordMatches = passwordEncryption.decrypt(user.getPassword()).equals(password);
 			boolean emailMatches = email.equals(user.getEmail());
 
@@ -136,26 +121,6 @@ public class UserDAOImpl implements UserDAO {
 		return jdbcTemplate.update(deleteExam, examId);
 	}
 
-//	public List<ExamDetails> findExam(String examName) throws SQLException {
-//	    ArrayList<ExamDetails> searchedExams = new ArrayList<>();
-//	    String searchQuery = "SELECT exam_id, exam_name, description, exam_date, application_start_date, application_end_date FROM exams WHERE exam_name LIKE ?";
-//	    try(PreparedStatement preparedStatement = connect.prepareStatement(searchQuery)) {
-//		    preparedStatement.setString(1, "%" + examName + "%"); 
-//		    ResultSet resultSet = preparedStatement.executeQuery();
-//		    while (resultSet.next()) {
-//		        int examId = resultSet.getInt(COLUMN_EXAM_ID);
-//		        String name = resultSet.getString(COLUMN_EXAM_NAME);
-//		        String description = resultSet.getString(COLUMN_DESCRIPTION);
-//		        Date examDate = resultSet.getDate(COLUMN_EXAM_DATE);
-//		        Timestamp applicationStartDate = resultSet.getTimestamp(COLUMN_APPLICATION_START_DATE);
-//		        Timestamp applicationEndDate = resultSet.getTimestamp(COLUMN_APPLICATION_END_DATE);
-//		        ExamDetails exam = new ExamDetails(examId, name, description, examDate, applicationStartDate, applicationEndDate);
-//		        searchedExams.add(exam);
-//		    }
-//		    return searchedExams;
-//	    }
-//	}
-
 	public boolean updateExamDetails(int examId, Date examDate, Date applicationStart, Date applicationEnd) {
 		String updateExamQuery = "UPDATE exams SET exam_date = ?, application_start_date = ?, application_end_date = ? WHERE exam_id = ?";
 
@@ -165,13 +130,13 @@ public class UserDAOImpl implements UserDAO {
 		return rowsUpdated > 0;
 	}
 
-	public int addUserDetails(User details, String appId) {
-		String addUserDetailsQuery = "INSERT INTO user_details (roll_no, name, dob, qualification, gender, city_preference_1, city_preference_2, city_preference_3, address, native_city, state, aadhar_number, application_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	public int addUserDetails(User details, String appId, int examId) {
+		String addUserDetailsQuery = "INSERT INTO user_details (roll_no, name, dob, qualification, gender, city_preference_1, city_preference_2, city_preference_3, address, native_city, state, aadhar_number, application_id, exam_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 		return jdbcTemplate.update(addUserDetailsQuery, details.getRollNo(), details.getName(),
 				new Date(details.getDob().getTime()), details.getQualification(), String.valueOf(details.getGender()),
 				details.getCityPreference1(), details.getCityPreference2(), details.getCityPreference3(),
-				details.getAddress(), details.getNativeCity(), details.getState(), details.getAadharNumber(), appId);
+				details.getAddress(), details.getNativeCity(), details.getState(), details.getAadharNumber(), appId, examId);
 	}
 
 	public int addUserDocument(int rollNo, byte[] passportPhoto, byte[] digitalSignature,
@@ -219,8 +184,6 @@ public class UserDAOImpl implements UserDAO {
                        "FROM exam_seating es " +
                        "JOIN exam_locations el ON es.location_id = el.location_id " +
                        "WHERE es.roll_no = ? AND es.exam_id = ?";
-        System.out.println(rollNo + " - " + examId);
-        System.out.println("in examLocationDetails");
         return jdbcTemplate.queryForObject(query, new LocationDetailsRowMapper(examId), new Object[]{rollNo, examId});
     }
     
@@ -342,7 +305,6 @@ public class UserDAOImpl implements UserDAO {
 	    }
 	    
 	    public boolean updateAdminReply(int queryId, String adminReply) {
-	    	System.out.println("in updateAdminreply method");
 	        String updateQueries = "UPDATE user_queries " +
 	                     "SET admin_reply = ?, reply_timestamp = NOW(), is_closed = TRUE " +
 	                     "WHERE query_id = ?";
@@ -352,7 +314,7 @@ public class UserDAOImpl implements UserDAO {
 	    }
 	    
 	    public List<User> findUsersByExamId(int examId) {
-	    	String userFinderForExam = "SELECT * FROM users WHERE exam_id = ?";
+	    	String userFinderForExam = "SELECT * FROM user_details WHERE exam_id = ?";
 	        return jdbcTemplate.query(userFinderForExam,new UserFinderRowMapper(), new Object[]{examId});
 	    }
 

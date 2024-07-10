@@ -9,14 +9,7 @@ body {
     background-size: cover;
     background-position: center;  
 }
-/* body {
-    background-image: url("images/back cover.jpg");
-    background-size: cover;
-    background-position: center;
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-} */
+
 
 .main-reg {
     max-width: 400px;
@@ -87,7 +80,6 @@ select:focus {
 .sign-navigator {
     font-size: normal;
     font-weight: lighter;
-    font-size:medium;
    
 }
 

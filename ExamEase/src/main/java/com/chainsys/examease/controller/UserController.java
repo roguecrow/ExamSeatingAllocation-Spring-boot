@@ -3,7 +3,6 @@ package com.chainsys.examease.controller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -36,7 +35,6 @@ import com.chainsys.examease.dao.UserDAO;
 import com.chainsys.examease.encrypt.PasswordEncryption;
 import com.chainsys.examease.model.Exam;
 import com.chainsys.examease.model.ExamAllocatedLocation;
-import com.chainsys.examease.model.ExamLocation;
 import com.chainsys.examease.model.User;
 import com.chainsys.examease.model.UserQuery;
 import com.google.gson.Gson;
@@ -53,6 +51,11 @@ public class UserController {
 	
 	 private static final String PARAM_EXAM_ID = "examId";
 	 private static final String SESSION_ATTR_USER_DETAILS = "userDetails";
+	 private static final String REDIRECT_TO_HOMEPAGE = "redirect:/homePage.jsp";
+	 private static final String SESSION_ATTR_EXAMS = "exams";
+	 private static final String ATTR_ERROR_MESSAGE = "errorMessage";
+
+
 
 	
 	@Autowired
@@ -76,7 +79,6 @@ public class UserController {
 	
 	@RequestMapping("/")
 	public String home() {
-		System.out.println("in landing page");
 		return "landingPage.jsp";
 	}
  
@@ -84,12 +86,11 @@ public class UserController {
 		public String userLogin(@RequestParam("email") String email, @RequestParam("password") String password,
 				HttpSession session, Model model) throws Exception {
 			if (userDAO.findUser(email, password, user, true)) {
-				session.setAttribute("userDetails", user);
-				session.setAttribute("exams", examDAO.getAllExams());
-				//session.setAttribute("appliedExams", examSeatingImpl.getExamIdsForUser(user.getRollNo()));
-				return "redirect:/homePage.jsp";
+				session.setAttribute("SESSION_ATTR_USER_DETAILS", user);
+				session.setAttribute(SESSION_ATTR_EXAMS, examDAO.getAllExams());
+				return REDIRECT_TO_HOMEPAGE;
 			} else {
-				model.addAttribute("errorMessage", "Invalid email or password. Please try again.");
+				model.addAttribute(ATTR_ERROR_MESSAGE, "Invalid email or password. Please try again.");
 				return "login.jsp";
 			}
 		}
@@ -99,14 +100,14 @@ public class UserController {
 			@RequestParam("password") String password, HttpSession session, Model model) throws Exception {
 
 		if (userDAO.findUser(email, password, user, false)) {
-			model.addAttribute("errorMessage", "Account already exists.");
+			model.addAttribute(ATTR_ERROR_MESSAGE, "Account already exists.");
 			return "registerPage.jsp";
 		} else {
 			userDAO.userRegistration(name, email, passwordEncryption.encrypt(password));
 			userDAO.findUser(email, password, user, false);
-			session.setAttribute("userDetails", user);
-			session.setAttribute("exams", examDAO.getAllExams());
-			return "redirect:/homePage.jsp";
+			session.setAttribute(SESSION_ATTR_USER_DETAILS, user);
+			session.setAttribute(SESSION_ATTR_EXAMS, examDAO.getAllExams());
+			return REDIRECT_TO_HOMEPAGE;
 		}
 	}
 	
@@ -141,22 +142,21 @@ public class UserController {
     
     @PostMapping("/loadAllExams")
     public String loadAllExams(Model model,HttpSession session) {
-    	System.out.println("from load all exams controller");
             List<Exam> exams = examDAO.getAllExams();
-            session.setAttribute("exams", exams);
-            return "redirect:/homePage.jsp"; 
+            session.setAttribute(SESSION_ATTR_EXAMS, exams);
+            return REDIRECT_TO_HOMEPAGE; 
     }
     
     @GetMapping("/searchExam")
     public String findExam(@RequestParam("query") String queryString, HttpSession session, Model model) {
         if (queryString != null && !queryString.isEmpty()) {
             List<Exam> exams = examDAO.findExam(queryString);
-            session.setAttribute("exams", exams);
+            session.setAttribute(SESSION_ATTR_EXAMS, exams);
         } else {
-            model.addAttribute("errorMessage", "Query string cannot be empty.");
+            model.addAttribute(ATTR_ERROR_MESSAGE, "Query string cannot be empty.");
         }
 
-        return "redirect:/homePage.jsp";
+        return REDIRECT_TO_HOMEPAGE;
     }
     
     @PostMapping("/logout")
@@ -234,7 +234,6 @@ public class UserController {
                                         @RequestParam("updateQualificationDocuments") MultipartFile qualificationDocumentsPart,
                                         HttpSession session,
                                         Model model) throws IOException {
-    	System.out.println("in updateDoc page");
 
     	user = (User) session.getAttribute(SESSION_ATTR_USER_DETAILS);
         String examIdStr = (String) session.getAttribute(PARAM_EXAM_ID);
@@ -260,7 +259,7 @@ public class UserController {
     }
 
     @PostMapping("/submitDetails")
-    public String handleSubmitDetails(HttpSession session, Model model) throws ClassNotFoundException {
+    public String handleSubmitDetails(HttpSession session, Model model) {
         User details = (User) session.getAttribute(SESSION_ATTR_USER_DETAILS);
         String examIdStr = (String) session.getAttribute(PARAM_EXAM_ID);
         int examId = Integer.parseInt(examIdStr);
@@ -271,14 +270,14 @@ public class UserController {
         byte[] qualificationDocuments = details.getQualificationDocuments();
 
         if (!examDAO.getExamDocById(details)) {
-            if (userDAO.addUserDetails(details, appId) == 1 && userDAO.addUserDocument(details.getRollNo(), passportPhoto, digitalSignature, qualificationDocuments) == 1) {
+            if (userDAO.addUserDetails(details, appId,examId) == 1 && userDAO.addUserDocument(details.getRollNo(), passportPhoto, digitalSignature, qualificationDocuments) == 1) {
             	examSeatAllocator.allocateSeats(details, examId);
                 return "redirect:/homePage.jsp?message=examAppliedSuccessfully";
             } else {
                 return "redirect:/homePage.jsp?message=examApplicationUnSuccessful";
             }
         } else {
-            if (userDAO.addUserDetails(details, appId) == 1) {
+            if (userDAO.addUserDetails(details, appId,examId) == 1) {
             	examSeatAllocator.allocateSeats(details, examId);
                 return "redirect:/homePage.jsp?message=examAppliedSuccessfully";
             } else {
@@ -295,7 +294,7 @@ public class UserController {
             HttpServletResponse response) {
         
         HttpSession session = request.getSession();
-        User userDetail = (User) session.getAttribute("userDetails");
+        User userDetail = (User) session.getAttribute(SESSION_ATTR_USER_DETAILS);
 
         if (userDetail != null) {
             InputStream inputStream = null;
@@ -318,14 +317,12 @@ public class UserController {
                         return;
                 }
 
-                if (inputStream != null) {
                     response.setContentType(contentType);
                     byte[] buffer = new byte[4096];
                     int bytesRead;
                     while ((bytesRead = inputStream.read(buffer)) != -1) {
                         response.getOutputStream().write(buffer, 0, bytesRead);
                     }
-                }
             } catch (IOException e) {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             } 
@@ -337,10 +334,8 @@ public class UserController {
     @PostMapping("/fetchSeatAllocation")
     public ResponseEntity<String> fetchSeatAllocation(@RequestParam int examId, @RequestParam int rollNo) {
         ExamAllocatedLocation locationDetails = examDAO.getExamLocationDetails(rollNo, examId);
-        System.out.println("allocated seat : "+locationDetails.getAllocatedSeat());
 		Gson gson = new Gson();
 		String jsonResponse = gson.toJson(locationDetails);
-		System.out.println("jsonResponse" +jsonResponse);
 		return ResponseEntity.ok(jsonResponse);
     }
     
@@ -349,7 +344,6 @@ public class UserController {
         try {
             String examDetailsJson = examDAO.getExamDetails(serialNumber);
             if (examDetailsJson != null) {
-            	System.out.println("examDetailsJson --" + examDetailsJson);
                 return ResponseEntity.ok(examDetailsJson);
             } else {
                 JsonObject errorResponse = new JsonObject();
@@ -390,7 +384,7 @@ public class UserController {
             @RequestParam("issueType") String issueType,
             @RequestParam("message") String message,HttpSession session) {
     	
-    	User userDetails = (User) session.getAttribute("userDetails");
+    	User userDetails = (User) session.getAttribute(SESSION_ATTR_USER_DETAILS);
     	userDetails.getRollNo();
     	 if(userDAO.addUserQuery(userDetails.getRollNo(),userName,userEmail,issueType,message)){
     		 return "redirect:/help.jsp?message=submittedSuccessfully";
@@ -402,11 +396,10 @@ public class UserController {
     
     @PostMapping("/examQueries")
     public ResponseEntity<String> getExamQueries(HttpSession session) {
-        User userDetails = (User) session.getAttribute("userDetails");
+        User userDetails = (User) session.getAttribute(SESSION_ATTR_USER_DETAILS);
         List<UserQuery> queries = userDAO.findUserQueries(userDetails.getRollNo());
         Gson gson = new Gson();
         String queriesJsonResponse = gson.toJson(queries);
-        System.out.println("queriesJsonResponse --" +queriesJsonResponse);
         return ResponseEntity.ok(queriesJsonResponse);
     }
     
@@ -415,23 +408,19 @@ public class UserController {
         List<UserQuery> queries = userDAO.findAdminQueries();
         Gson gson = new Gson();
         String queriesJsonResponse = gson.toJson(queries);
-        System.out.println("queriesJsonResponse --" +queriesJsonResponse);
         return ResponseEntity.ok(queriesJsonResponse);
     }
     
     @PostMapping("/submitReply")
     public ResponseEntity<String> submitReply(@RequestBody Map<String, String> payload) {
-    	System.out.println("in submitReply");
         String queryId = payload.get("id");
         String replyText = payload.get("reply");
 
         try {
         	if(userDAO.updateAdminReply(Integer.parseInt(queryId), replyText)) {
-        		System.out.println("on success");
                 return ResponseEntity.ok("Reply submitted successfully!");
         	}
         	else {
-        		System.out.println("on failure");
         		return ResponseEntity.ok("Failed to Submit!");
         	}
         } catch (Exception e) {
@@ -444,7 +433,6 @@ public class UserController {
         List<User> users = userDAO.findUsersByExamId(examId);
         Gson gson = new Gson();
         String usersJsonResponse = gson.toJson(users);
-        System.out.println("queriesJsonResponse --" +usersJsonResponse);
         return ResponseEntity.ok(usersJsonResponse);
     }
 }

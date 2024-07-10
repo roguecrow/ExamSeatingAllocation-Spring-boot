@@ -6,7 +6,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.chainsys.examease.dao.ExamDAO;
@@ -56,7 +55,6 @@ public class AdminController {
                                 @RequestParam("applicationEnd") Date applicationEnd,
                                 HttpServletRequest request,HttpSession session) {
         ModelAndView modelAndView = new ModelAndView();
-        System.out.println("in addExam Controller");
 
         int examId = userDAO.createExam(examName, examDescription, examDate, applicationStart, applicationEnd);
 

@@ -17,7 +17,7 @@ public class ExamSeatAllocator {
 	@Autowired
 	ExamDAO examDAO;
 	
-    public void allocateSeats(User details, int examId) throws ClassNotFoundException  {
+    public void allocateSeats(User details, int examId)  {
 
         String cityPreference1 = details.getCityPreference1();
         String cityPreference2 = details.getCityPreference2();
@@ -40,7 +40,6 @@ public class ExamSeatAllocator {
     }
     
     private boolean allocateSeatByCityPreference(List<ExamLocation> examLocations, String cityPreference, User details, int examId) {
-    	System.out.println("in allocatedSeats");
 
         for (ExamLocation location : examLocations) {
             if (location.getCity().equalsIgnoreCase(cityPreference) && location.getCapacity() > location.getFilledCapacity()) {
@@ -60,7 +59,6 @@ public class ExamSeatAllocator {
     }
     
     private boolean allocateSeatInAnyAvailableCity(List<ExamLocation> examLocations, User details, int examId) {
-    	System.out.println("In Seat Availabilty");
         for (ExamLocation location : examLocations) {
             if (location.getCapacity() > location.getFilledCapacity()) {
                 

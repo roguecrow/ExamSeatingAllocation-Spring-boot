@@ -1,8 +1,6 @@
 package com.chainsys.examease.dao;
 
-import java.lang.reflect.Array;
 import java.sql.ResultSet;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
@@ -21,7 +19,6 @@ import com.chainsys.examease.model.Exam;
 import com.chainsys.examease.model.ExamAllocatedLocation;
 import com.chainsys.examease.model.ExamLocation;
 import com.chainsys.examease.model.User;
-import com.chainsys.examease.validator.UserValidation;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -128,8 +125,6 @@ public class ExamDAOImpl implements ExamDAO {
                        "FROM exam_seating es " +
                        "JOIN exam_locations el ON es.location_id = el.location_id " +
                        "WHERE es.roll_no = ? AND es.exam_id = ?";
-        System.out.println(rollNo + " - " + examId);
-        System.out.println("in examLocationDetails");
         return jdbcTemplate.queryForObject(query, new LocationDetailsRowMapper(examId), new Object[]{rollNo, examId});
     }
 
