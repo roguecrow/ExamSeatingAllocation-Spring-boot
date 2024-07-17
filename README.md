@@ -39,7 +39,7 @@ Exam Seating Arrangement System allows users to apply for exams, view exams, vie
 ### ================ Software And Tools Required ================
 - Eclipse
 - Java [JDK 17]
-- Tomcat v8.0+
+- Tomcat v9.0+
 - Apache Maven
 - MySQL Workbench
 
