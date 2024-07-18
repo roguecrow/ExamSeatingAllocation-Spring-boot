@@ -28,17 +28,19 @@ public class LocationDetailsRowMapper implements RowMapper<ExamAllocatedLocation
 
     @Override
     public ExamAllocatedLocation mapRow(ResultSet rs, int rowNum) throws SQLException {
-        int allocatedSeat = rs.getInt(COLUMN_ALLOCATED_SEAT);
-        int locationId = rs.getInt(COLUMN_LOCATION_ID);
-        String city = rs.getString(COLUMN_CITY);
-        String venueName = rs.getString(COLUMN_VENUE_NAME);
-        String hallName = rs.getString(COLUMN_HALL_NAME);
-        int totalCapacity = rs.getInt(COLUMN_TOTAL_CAPACITY);
-        String address = rs.getString(COLUMN_ADDRESS);
-        String locationUrl = rs.getString(COLUMN_LOCATION_URL);
-        int filledCapacity = rs.getInt(COLUMN_FILLED_CAPACITY);
-        String serialNo = rs.getString(COLUMN_SERIAL_NO);
-        System.out.println("in Exam AllocatedLoaction");
-        return new ExamAllocatedLocation(allocatedSeat, locationId, city, venueName, hallName, totalCapacity, address, locationUrl, examId, filledCapacity, serialNo);
+        ExamAllocatedLocation examAllocatedLocation = new ExamAllocatedLocation();
+        examAllocatedLocation.setAllocatedSeat(rs.getInt(COLUMN_ALLOCATED_SEAT));
+        examAllocatedLocation.setLocationId(rs.getInt(COLUMN_LOCATION_ID));
+        examAllocatedLocation.setCity(rs.getString(COLUMN_CITY));
+        examAllocatedLocation.setVenueName(rs.getString(COLUMN_VENUE_NAME));
+        examAllocatedLocation.setHallName(rs.getString(COLUMN_HALL_NAME));
+        examAllocatedLocation.setTotalCapacity(rs.getInt(COLUMN_TOTAL_CAPACITY));
+        examAllocatedLocation.setAddress(rs.getString(COLUMN_ADDRESS));
+        examAllocatedLocation.setLocationUrl(rs.getString(COLUMN_LOCATION_URL));
+        examAllocatedLocation.setFilledCapacity(rs.getInt(COLUMN_FILLED_CAPACITY));
+        examAllocatedLocation.setSerialNo(rs.getString(COLUMN_SERIAL_NO));
+        examAllocatedLocation.setExamId(this.examId);
+        
+        return examAllocatedLocation;
     }
 }

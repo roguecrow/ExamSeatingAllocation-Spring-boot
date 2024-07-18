@@ -5,164 +5,242 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Add New Exam</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
     <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Arial', sans-serif;
-        }
+body {
+	background-color: #f8f9fa;
+	font-family: 'Arial', sans-serif;
+}
 
-        .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 50px;
-            max-width: 800px;
-        }
+.container {
+	background-color: #ffffff;
+	padding: 30px;
+	border-radius: 10px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	margin-top: 50px;
+	margin-bottom: 50px;
+}
 
-        h2 {
-            color: #343a40;
-            text-align: center;
-            margin-bottom: 20px;
-        }
+h2 {
+	color: #343a40;
+	text-align: left;
+	margin-bottom: 20px;
+}
 
-        .form-label {
-            color: #495057;
-            font-weight: bold;
-        }
+.form-label {
+	color: #495057;
+	font-weight: bold;
+}
 
-        .form-control {
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-        }
+.form-control {
+	border: 1px solid #ced4da;
+	border-radius: 5px;
+}
 
-        .error {
-            color: #dc3545;
-            font-size: 0.875rem;
-        }
+.error {
+	color: #dc3545;
+	font-size: 0.875rem;
+}
 
-        #addLocationButton {
-            background-color: #28a745;
-            color: #ffffff;
-            border: none;
-            border-radius: 5px;
-        }
+#addLocationButton {
+	border-radius: 5px;
+}
 
-        #addLocationButton:hover {
-            background-color: #218838;
-        }
+#addLocationButton:hover {
+	background-color: #218838;
+}
 
-        .removeLocationButton {
-            margin-top: 10px;
-        }
+.removeLocationButton {
+	border-radius: 5px;
+}
 
-        .removeLocationButton {
-            background-color: #dc3545;
-            color: #ffffff;
-            border: none;
-            border-radius: 5px;
-        }
+.removeLocationButton:hover {
+	background-color: #c82333;
+}
 
-        .removeLocationButton:hover {
-            background-color: #c82333;
-        }
+button[type="submit"] {
+	background-color: #007bff;
+	color: #ffffff;
+	border: none;
+	border-radius: 5px;
+	padding: 10px 40px;
+}
 
-        button[type="submit"] {
-            background-color: #007bff;
-            color: #ffffff;
-            border: none;
-            border-radius: 5px;
-        }
+button[type="submit"]:hover {
+	background-color: #0069d9;
+}
 
-        button[type="submit"]:hover {
-            background-color: #0069d9;
-        }
+hr {
+	border-top: 1px solid #dee2e6;
+}
 
-        hr {
-            border-top: 1px solid #dee2e6;
-        }
+.location-entry {
+	background-color: #f8f9fa;
+	padding: 20px;
+	border-radius: 5px;
+	margin-top: 20px;
+}
 
-        .location-entry {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
+.location-entry h4 {
+	color: #495057;
+	margin-bottom: 15px;
+}
 
-        .location-entry h4 {
-            color: #495057;
-            margin-bottom: 15px;
-        }
+.left-column {
+	width: 60%;
+}
 
-        @media (max-width: 576px) {
-            .container {
-                padding: 20px;
-            }
-        }
-    </style>
+.right-column {
+	width: 35%;
+	max-height: 600px;
+	overflow-y: auto;
+	padding-left: 15px;
+}
+
+@media ( max-width : 576px) {
+	.container {
+		padding: 20px;
+	}
+	.left-column, .right-column {
+		width: 100%;
+		max-height: none;
+		overflow-y: visible;
+	}
+}
+
+.navbar-brand img {
+	margin-left: 10px;
+	width: 100px;
+	height: auto;
+	filter: brightness(0%) contrast(100%);
+}
+
+.custom-navbar {
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	background-color: #ffffff;
+}
+
+.navbar-nav .nav-link:hover {
+	color: blue;
+}
+
+.profile-dropdown {
+	margin-right: 20px;
+}
+
+.profile-container {
+	display: flex;
+	align-items: center;
+	border-radius: 20px;
+	background-color: #f8f9fa;
+	border: 1px solid #ddd;
+	padding: 5px 10px;
+	color: black;
+}
+
+.profile-container:hover {
+	color: blue;
+}
+
+.profile-icon {
+	font-size: 1.5em;
+	border-radius: 50%;
+	padding: 5px;
+	background-color: #fff;
+	margin-right: 10px;
+}
+
+.username {
+	font-size: 1em;
+	font-weight: bold;
+}
+
+.dropdown-item i {
+	margin-right: 10px;
+}
+
+.navbar-nav {
+	margin-left: 20px;
+}
+</style>
 </head>
 <body>
+<jsp:include page="navbar.jsp" />
     <div class="container">
-        <h2>Add New Exam</h2>
-        <form id="examForm" action="AddExam" method="post">
-            <div class="mb-3">
-                <label for="examName" class="form-label">Exam Name</label>
-                <input type="text" class="form-control" id="examName" name="examName" required>
-                <div class="error" id="examNameError"></div>
+       <div class="row-title" style="position: relative;">
+        <h2 style="position: absolute; right: 26%">Locations</h2>
+            <h2 >Add New Exam</h2>   
+       </div>
+        <div class="row">
+            <div class="col-md-7 left-column">
+                <form id="examForm" action="AddExam" method="post">
+                    <div class="mb-3">
+                        <label for="examName" class="form-label">Exam Name</label>
+                        <input type="text" class="form-control" id="examName" name="examName" required>
+                        <div class="error" id="examNameError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="examDescription" class="form-label">Exam Description</label>
+                        <textarea class="form-control" id="examDescription" name="examDescription" rows="3" required></textarea>
+                        <div class="error" id="examDescriptionError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="examDate" class="form-label">Exam Date</label>
+                        <input type="date" class="form-control" id="examDate" name="examDate" required>
+                        <div class="error" id="examDateError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="applicationStart" class="form-label">Application Start Date</label>
+                        <input type="date" class="form-control" id="applicationStart" name="applicationStart" required>
+                        <div class="error" id="applicationStartError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="applicationEnd" class="form-label">Application End Date</label>
+                        <input type="date" class="form-control" id="applicationEnd" name="applicationEnd" required>
+                        <div class="error" id="applicationEndError"></div>
+                    </div>
+                    <div class="d-flex justify-content-center m-5 ">
+                        <button type="submit" class="btn btn-primar">Save Exam</button>
+                    </div>
+                </form>
             </div>
-            <div class="mb-3">
-                <label for="examDescription" class="form-label">Exam Description</label>
-                <textarea class="form-control" id="examDescription" name="examDescription" rows="3" required></textarea>
-                <div class="error" id="examDescriptionError"></div>
-            </div>
-            <div class="mb-3">
-                <label for="examDate" class="form-label">Exam Date</label>
-                <input type="date" class="form-control" id="examDate" name="examDate" required>
-                <div class="error" id="examDateError"></div>
-            </div>
-            <div class="mb-3">
-                <label for="applicationStart" class="form-label">Application Start Date</label>
-                <input type="date" class="form-control" id="applicationStart" name="applicationStart" required>
-                <div class="error" id="applicationStartError"></div>
-            </div>
-            <div class="mb-3">
-                <label for="applicationEnd" class="form-label">Application End Date</label>
-                <input type="date" class="form-control" id="applicationEnd" name="applicationEnd" required>
-                <div class="error" id="applicationEndError"></div>
-            </div>
-            <div id="locations-container">
-                <h4>Location 1</h4>
-                <div class="mb-3">
-                    <label for="city" class="form-label">City</label>
-                    <input type="text" class="form-control" id="city" name="locations[0].city" required>
+            <div class="col-md-5 right-column"">
+                <div id="locations-container">
+                    <h6>Location 1</h6>
+                    <div class="mb-3">
+                        <label for="city" class="form-label">City</label>
+                        <input type="text" class="form-control" id="city" name="locations[0].city" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="venueName" class="form-label">Venue Name</label>
+                        <input type="text" class="form-control" id="venueName" name="locations[0].venueName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="hallName" class="form-label">Hall Name</label>
+                        <input type="text" class="form-control" id="hallName" name="locations[0].hallName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="capacity" class="form-label">Capacity</label>
+                        <input type="number" class="form-control" id="capacity" name="locations[0].capacity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <input type="text" class="form-control" id="address" name="locations[0].address" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="locationUrl" class="form-label">Location URL</label>
+                        <input type="text" class="form-control" id="locationUrl" name="locations[0].locationUrl" required>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label for="venueName" class="form-label">Venue Name</label>
-                    <input type="text" class="form-control" id="venueName" name="locations[0].venueName" required>
-                </div>
-                <div class="mb-3">
-                    <label for="hallName" class="form-label">Hall Name</label>
-                    <input type="text" class="form-control" id="hallName" name="locations[0].hallName" required>
-                </div>
-                <div class="mb-3">
-                    <label for="capacity" class="form-label">Capacity</label>
-                    <input type="number" class="form-control" id="capacity" name="locations[0].capacity" required>
-                </div>
-                <div class="mb-3">
-                    <label for="address" class="form-label">Address</label>
-                    <input type="text" class="form-control" id="address" name="locations[0].address" required>
-                </div>
-                <div class="mb-3">
-                    <label for="locationUrl" class="form-label">Location URL</label>
-                    <input type="text" class="form-control" id="locationUrl" name="locations[0].locationUrl" required>
-                </div>
-            </div>
-            <input type="hidden" id="locationIndex" name="locationIndex" value="1">
-            <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-secondary me-3" id="addLocationButton">Add Another Location</button>
-                <button type="submit" class="btn btn-primary">Save Exam</button>
-            </div>
-        </form>
+				<div class="d-flex justify-content-end mt-3">
+					<button type="button" class="btn btn-outline-secondary me-3"
+						id="addLocationButton">
+						<i class="fas fa-plus"></i> Location
+					</button>
+				</div>
+			</div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -175,7 +253,7 @@
             const newLocation = document.createElement('div');
             newLocation.classList.add('location-entry');
             newLocation.innerHTML = `
-                <h4>Location \${locationIndex + 1}</h4>
+                <h6>Location \${locationIndex + 1}</h6>
                 <div class="mb-3">
                     <label for="city" class="form-label">City</label>
                     <input type="text" class="form-control" id="city" name="locations[\${locationIndex}].city" required>
@@ -200,7 +278,7 @@
                     <label for="locationUrl" class="form-label">Location URL</label>
                     <input type="text" class="form-control" id="locationUrl" name="locations[\${locationIndex}].locationUrl" required>
                 </div>
-                <button type="button" class="btn btn-danger removeLocationButton">Remove Location</button>
+                <button type="button" class="btn btn-outline-danger removeLocationButton"><i class="fas fa-trash-alt"></i> Remove</button>
                 <hr>
             `;
             

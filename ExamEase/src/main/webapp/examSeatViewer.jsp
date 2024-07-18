@@ -228,7 +228,7 @@
             console.log("Selected Exam ID:", examId);
 
             $.ajax({
-                url: 'fetchSeatAllocation',
+                url: '/fetchSeatAllocation',
                 method: 'POST',
                 data: { examId: examId, rollNo: <%= userDetails.getRollNo() %> },
                 success: function(response) {

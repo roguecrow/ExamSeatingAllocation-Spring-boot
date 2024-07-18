@@ -114,17 +114,57 @@ h1 {
 
 .list-group-item {
 	cursor: pointer;
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	margin-bottom: 10px;
+	position: relative;
+	padding: 15px;
+	transition: background-color 0.3s ease;
+}
+
+.list-group-item:hover {
+	background-color: #f0f0f0; 
+}
+
+.list-group-item h5 {
+	margin-bottom: 5px;
+	font-size: 1.2em;
+	color: #007bff; 
 }
 
 .reply-form {
 	display: none;
 	margin-top: 15px;
 }
+
+.reply-form textarea {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	resize: vertical; 
+}
+
+.reply-form .btn-primary {
+	margin-top: 5px;
+}
+
+.closed-tag {
+	font-size: 0.8em;
+	color: #dc3545; 
+	position: absolute;
+	top: 15px;
+	right: 15px;
+}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>Manage User Queries</h1>
+  <div class="mb-3">
+    <button id="showAllBtn" class="btn btn-primary mr-2">Show All</button>
+    <button id="showOpenBtn" class="btn btn-outline-primary">Show Open</button>
+  </div>
   <div class="list-group" id="queryList">
     <!-- Queries will be populated here -->
   </div>
@@ -137,7 +177,6 @@ $(document).ready(function() {
         url: "/adminFetchQueries",
         success: function(response) {
             var queries = JSON.parse(response);
-            console.log("queries --" + JSON.stringify(queries, null, 2));
             populateQueries(queries);
         },
         error: function() {
@@ -165,6 +204,12 @@ $(document).ready(function() {
             queryItem.append(userEmail);
             var reply = $('<p>').html('<strong>Reply:</strong> ' + (query.reply ? query.reply : 'No reply yet.'));
             queryItem.append(reply);
+            if (query.isClosed) {
+                 console.log("is closed -" + query.isClosed);
+                var closedTag = $('<span>').addClass('closed-tag').text('Closed');
+                queryItem.append(closedTag);
+                queryItem.addClass('closed'); // Optionally add a class for styling closed queries
+            }
             
             var replyForm = $('<div>').addClass('reply-form').attr('id', 'replyForm-' + query.id);
             var replyTextarea = $('<textarea>').addClass('form-control').attr('rows', '3').attr('placeholder', 'Type your reply here...');
@@ -188,6 +233,15 @@ $(document).ready(function() {
             container.append(queryItem);
         });
     }
+
+    $('#showAllBtn').click(function() {
+        $('.list-group-item').show();
+    });
+    
+    $('#showOpenBtn').click(function() {
+        $('.list-group-item').show();
+        $('.list-group-item.closed').hide();
+    });
 
     function submitReply(queryId, replyText) {
         $.ajax({

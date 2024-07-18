@@ -12,19 +12,7 @@ public class ExamLocation {
     private int examId;
     private int filledCapacity;
 
-    public ExamLocation() {
-    }
 
-    public ExamLocation(int locationId, String city, String venueName, String hallName, int capacity, String address, String locationUrl,int filledCapacity) {
-        this.locationId = locationId;
-        this.city = city;
-        this.venueName = venueName;
-        this.hallName = hallName;
-        this.capacity = capacity;
-        this.address = address;
-        this.locationUrl = locationUrl;
-        this.filledCapacity = filledCapacity;
-    }
 
     public int getLocationId() {
         return locationId;

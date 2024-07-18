@@ -7,9 +7,11 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.chainsys.examease.exceptions.ExamNotFoundException;
 import com.chainsys.examease.mapper.ExamDetailsRowMapper;
 import com.chainsys.examease.mapper.ExamLocationDetailsRowMapper;
 import com.chainsys.examease.mapper.GetAllExamsRowMapper;
@@ -19,6 +21,7 @@ import com.chainsys.examease.model.Exam;
 import com.chainsys.examease.model.ExamAllocatedLocation;
 import com.chainsys.examease.model.ExamLocation;
 import com.chainsys.examease.model.User;
+import com.chainsys.examease.validator.UserValidation;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -52,24 +55,56 @@ public class ExamDAOImpl implements ExamDAO {
 	}
 
 	public Exam getExamById(int examId) {
-		String getExamQuery = "SELECT exam_id, exam_name, description, exam_date, application_start_date, application_end_date FROM exams WHERE exam_id = ?";
+	    if (!UserValidation.validateInt(examId) || examId <= 0) {
+	        throw new ExamNotFoundException("Invalid exam ID: " + examId);
+	    }
 
-		return jdbcTemplate.queryForObject(getExamQuery, new ExamDetailsRowMapper(), examId);
+	    String getExamQuery = "SELECT exam_id, exam_name, description, exam_date, application_start_date, application_end_date FROM exams WHERE exam_id = ?";
+	    try {
+	        return jdbcTemplate.queryForObject(getExamQuery, new ExamDetailsRowMapper(), examId);
+	    } catch (EmptyResultDataAccessException e) {
+	        throw new ExamNotFoundException("Exam not found with ID: " + examId);
+	    }
 	}
 	
 	public List<String> getCityLocationsForExam(int examId) {
+		if (!UserValidation.validateInt(examId) || examId <= 0) {
+	        throw new ExamNotFoundException("Invalid exam ID: " + examId);
+	    }
 		String getCitiesQuery = "SELECT DISTINCT city FROM exam_locations WHERE exam_id = ?";
-		return jdbcTemplate.query(getCitiesQuery, (resultSet, rowNum) -> resultSet.getString("city"), examId);
+		try {
+			return jdbcTemplate.query(getCitiesQuery, (resultSet, rowNum) -> resultSet.getString("city"), examId);
+	    } catch (EmptyResultDataAccessException e) {
+	        throw new ExamNotFoundException("Exam not found with ID: " + examId);
+	    }
 	}
 
 	public int deleteExam(int examId) {
+		if (!UserValidation.validateInt(examId) || examId <= 0) {
+	        throw new ExamNotFoundException("Invalid exam ID: " + examId);
+	    }
 		String deleteExam = "DELETE FROM exams WHERE exam_id = ?";
-		return jdbcTemplate.update(deleteExam, examId);
+		try {
+			return jdbcTemplate.update(deleteExam, examId);
+	    } catch (EmptyResultDataAccessException e) {
+	        throw new ExamNotFoundException("Exam not found with ID: " + examId);
+	    }
 	}
 
 	public List<Exam> findExam(String queryString) {
-		String findExamQuery = "SELECT * FROM exams WHERE exam_name LIKE ?";
-		return jdbcTemplate.query(findExamQuery, new ExamDetailsRowMapper(), "%" + queryString + "%");
+		System.out.println("in find Exam method");
+	    if (!UserValidation.validateString(queryString)) {
+	        throw new IllegalArgumentException("Invalid search query string");
+	    }
+
+	    String findExamQuery = "SELECT * FROM exams WHERE exam_name LIKE ?";
+	    List<Exam> exams = jdbcTemplate.query(findExamQuery, new ExamDetailsRowMapper(), "%" + queryString + "%");
+	    
+	    if (exams.isEmpty()) {
+	        throw new ExamNotFoundException("No exams found with name containing: " + queryString);
+	    }
+
+	    return exams;
 	}
 
 	public boolean updateExamDetails(int examId, Date examDate, Date applicationStart, Date applicationEnd) {
@@ -86,7 +121,7 @@ public class ExamDAOImpl implements ExamDAO {
 
 		try {
 			User result = jdbcTemplate.queryForObject(getExamQuery, new GetUserDocRowMapper(),
-					new Object[] { details.getRollNo() });
+					(Object) details.getRollNo());
 			if (result != null) {
 				details.setPassportSizePhoto(result.getPassportSizePhoto());
 				details.setDigitalSignature(result.getDigitalSignature());
@@ -101,7 +136,7 @@ public class ExamDAOImpl implements ExamDAO {
 
 	public List<ExamLocation> findExamLocationById(int examId) {
 		String getExamLocations = "SELECT location_id, city, venue_name, hall_name, total_capacity, address, location_url, filled_capacity FROM exam_locations WHERE exam_id = ?";
-		return jdbcTemplate.query(getExamLocations, new ExamLocationDetailsRowMapper(), new Object[] { examId });
+		return jdbcTemplate.query(getExamLocations, new ExamLocationDetailsRowMapper(), (Object) examId );
 	}
 
 	public int getLastAllocatedSeatId(int locationId) {
@@ -121,11 +156,12 @@ public class ExamDAOImpl implements ExamDAO {
     }
 
 	public ExamAllocatedLocation getExamLocationDetails(int rollNo, int examId) {
+		System.out.println(rollNo + " " + examId);
         String query = "SELECT es.allocated_seat, es.serial_no, el.* " +
                        "FROM exam_seating es " +
                        "JOIN exam_locations el ON es.location_id = el.location_id " +
                        "WHERE es.roll_no = ? AND es.exam_id = ?";
-        return jdbcTemplate.queryForObject(query, new LocationDetailsRowMapper(examId), new Object[]{rollNo, examId});
+        return jdbcTemplate.queryForObject(query, new LocationDetailsRowMapper(examId), new Object[] {rollNo, examId});
     }
 
 	 public String getExamDetails(String serialNo) {
@@ -193,7 +229,7 @@ public class ExamDAOImpl implements ExamDAO {
 	            } else {
 	                return null;
 	            }
-	        },new Object[]{serialNo});
+	        },(Object) serialNo);
 	    }
 
 	    private String encodeToBase64(byte[] data) {

@@ -6,6 +6,10 @@ import java.util.regex.Pattern;
 
 public class UserValidation {
 
+    private UserValidation() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     public static boolean validateInt(int value) {
         return value > 0;
     }

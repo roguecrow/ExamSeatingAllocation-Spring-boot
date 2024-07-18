@@ -34,7 +34,8 @@
     }
     .right-container {
         flex: 1;
-        padding: 20px;
+        padding: 20px;    
+        position: relative; /* Necessary for absolute positioning of .user-count */      
     }
 
     .profile-dropdown {
@@ -135,6 +136,26 @@
         font-size: 1.0em; 
         font-weight:500;
     }
+    
+.user-count2{
+ position: absolute;
+  top: 20px; 
+  right: 70px; 
+}   
+    
+.user-count {
+    position: absolute;
+    height:25px;
+    width:25px;
+    top: 21px; 
+    right: 41px; 
+ 	padding-left:7px;
+    background-color: rgba(6, 72, 255, 0.614);
+    color: #fff;
+    font-size: large;
+    border-radius: 50%;
+    display: inline-block;
+}
 </style>
 </head>
 <body>
@@ -174,7 +195,12 @@
     </div>
 </div>
      <div class="right-container">
-        <h2>Users Applied for Exam</h2>
+        <h2>Users Applied for Exam </h2>
+        <div class ="count" "> 
+        <span class=user-count2>User count</span>
+        <div class ="user-count">
+        </div>
+        </div>
         <div class = "Scrollable-user-list">
         <div class="accordion" id="accordionExample">
             <!-- User details will be dynamically loaded here -->
@@ -197,6 +223,8 @@
                 data: { examId: examId },
                 success: function(response) {
                     var users = JSON.parse(response);
+                    console.log(users.length);
+                    $(".user-count").text(users.length);
                     var accordion = $("#accordionExample");
                     accordion.empty();
 

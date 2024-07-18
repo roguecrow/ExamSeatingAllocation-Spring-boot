@@ -6,10 +6,7 @@ import java.util.Date;
 import org.springframework.context.annotation.Configuration;
 @Configuration
 public class User implements Serializable {
-    /**
-	 * 
-	 */
-	 //private static final long serialVersionUID = -6064039089895263645L; 
+	
 	private int rollNo;
     private String name;
     private int roleId;

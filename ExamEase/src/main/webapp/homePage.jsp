@@ -277,10 +277,16 @@ padding: 6px;
 .badge-space {
     margin-right: 5px;
 }
-
-
+.footer {
+    background-color: #343a40;
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    }
 </style>
-
 </head>
 <body>
 <%
@@ -343,10 +349,10 @@ padding: 6px;
                         <%
                         }
                         %>
-                        <% if (isApplied) { %>
+                        <% if (isApplied && roleId != 0) { %>
                         <span class="badge badge-success badge-space">Applied</span>
                         <% } %>
-                        <% if (isExpired) { %>
+                        <% if (isExpired && roleId != 0) { %>
                         <span class="badge badge-secondary">Ended</span>
                         <% } %>
                     </div>
@@ -367,7 +373,7 @@ padding: 6px;
                     <h2>Exam Details</h2>
                     <p>Select an exam to view details.</p>
                 </div>
-                <% if (roleId != 0) { 
+                <% if (roleId != 0) {
                 %>
                 <a id="applyNowButton" href="#" class="btn btn-primary btn-lg apply-now-button">Apply Now</a>
                 <% } %>
@@ -416,156 +422,167 @@ padding: 6px;
         </div>
     </div>
 
-    <script>
-        $(function() {
-            $("#nav-placeholder").load("navbar.jsp");
-            $("#applyNowButton").hide();
-            $(".card").click(function() {
-                var examId = $(this).attr("id").substring(4);
-                console.log(examId);
-                var isApplied = $(this).hasClass("applied-exam");
-                var isExpired = $(this).hasClass("expired-exam");
-                
-                if (isApplied || isExpired) {
-                    $("#applyNowButton").hide();
-                } else {
-                    $("#applyNowButton").attr("href", "applyExam.jsp?examId=" + examId).show();
-                }
-
-                $("#examIdInput").val(examId);
-
-                $.ajax({
-                    url: "/getExamDetails",
-                    method: "GET",
-                    data: { examId: examId },
-                    success: function(response) {
-                        $("#examDetails").html(response);
-                        $("#updateButton").data("exam-id", examId).show();
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("Error retrieving exam details:", error);
-                    }
-                });
-            });
-
-
-            var message = "<%= request.getParameter("message") %>";
-            var type = "<%= request.getParameter("type") %>";
-            if (message) {
-                var alertMessage = "";
-
-                if (message === "examAddedSuccessfully") {
-                    alertMessage = "Exam added successfully!";
-                    type = "success";
-                } else if (message === "errorAddingExam") {
-                    alertMessage = "Something went wrong. Please try again later.";
-                } else if (message === "examUpdatedSuccessfully") {
-                    alertMessage = "Exam updated successfully!";
-                    type = "success";
-                } else if (message === "errorUpdatingExam") {
-                    alertMessage = "Error updating exam. Please try again later.";
-                } else if (message === "examAppliedSuccessfully") {
-                    alertMessage = "Exam applied successfully!";
-                    type = "success";
-                } else if (message === "examApplicationUnSuccessfull") {
-                    alertMessage = "Exam application unsuccessful. Please try again later.";
-                }
-
-                showAlert(alertMessage, type);
-            }
-
-            function showAlert(message, type) {
-                if (message) {
-                    var alertElement = $('#alertMessage');
-                    alertElement.text(message);
-                    if (type === 'success') {
-                        alertElement.removeClass('alert-danger').addClass('alert-success');
-                    } else {
-                        alertElement.removeClass('alert-success').addClass('alert-danger');
-                    }
-                    alertElement.addClass('show');
-                    setTimeout(function() {
-                        alertElement.fadeOut('slow', function() {
-                            $(this).remove();
-                        });
-                    }, 3000);
-                }
-            }
-
-            $('#updateExamModal').on('show.bs.modal', function(event) {
-                var button = $(event.relatedTarget);
-                var examId = button.data('exam-id');
-                var examName = button.data('exam-name');
-                var examDate = button.data('exam-date');
-                var applicationStart = button.data('application-start');
-                var applicationEnd = button.data('application-end');
-                console.log("Exam Date:", examDate);
-                console.log("Application Start:", applicationStart, "Application End:", applicationEnd);
-
-                var modal = $(this);
-                modal.find('#examIdInput').val(examId);
-                modal.find('#examName').val(examName);
-                modal.find('#examDate').val(examDate);
-                modal.find('#applicationStart').val(applicationStart);
-                modal.find('#applicationEnd').val(applicationEnd);
-            });
-
-            $('#updateExamForm').submit(function(event) {
-                console.log("Form submitted");
-
-                var examDate = $('#examDate').val();
-                var applicationStart = $('#applicationStart').val();
-                var applicationEnd = $('#applicationEnd').val();
-
-                console.log("Exam Date:", examDate);
-                console.log("Application Start:", applicationStart);
-                console.log("Application End:", applicationEnd);
-
-                var threeDaysFromToday = new Date();
-                threeDaysFromToday.setDate(threeDaysFromToday.getDate() + 3);
-                document.getElementById('examDateError').innerText = '';
-                document.getElementById('applicationStartError').innerText = '';
-                document.getElementById('applicationEndError').innerText = '';
-                document.getElementById('examNameError').innerText = '';
-
-                var valid = true;
-
-                if (new Date(applicationStart) >= new Date(applicationEnd)) {
-                    document.getElementById('applicationStartError').innerText = 'The application start date should be before the application end date.';
-                    valid = false;
-                }
-                if (new Date(applicationStart) >= new Date(examDate) || new Date(applicationEnd) >= new Date(examDate)) {
-                    document.getElementById('applicationEndError').innerText = 'Both application start and end dates should be before the exam date.';
-                    valid = false;
-                } 
-                if (new Date(examDate) < threeDaysFromToday) {
-                    document.getElementById('examDateError').innerText = 'The exam date should be at least 3 days from today.';
-                    valid = false;
-                }
-
-                if (!valid) {
-                    event.preventDefault();
-                }
-            });
+<script>
+    $(function() {
+        $("#nav-placeholder").load("navbar.jsp");
+        $("#applyNowButton").hide();
+        
+        // Function to handle card clicks
+        $(".card").click(function() {
+            var examId = $(this).attr("id").substring(4);
+            console.log(examId);
+            var isApplied = $(this).hasClass("applied-exam");
+            var isExpired = $(this).hasClass("expired-exam");
             
-            $(document).ready(function() {
-                $("#showAllExamsBtn").click(function() {
-                       console.log('from show all button');
-                    $.ajax({
-                        url: "loadAllExams",  
-                        method: "POST",
-                        success: function(response) {
-                             location.reload();
-                        },
-                        error: function(xhr, status, error) {
-                            console.error("Error retrieving all exams:", error);
-                        }
-                    });
-                });
+            // Show or hide apply button based on conditions
+            if (isApplied || isExpired) {
+                $("#applyNowButton").hide();
+            } else {
+                $("#applyNowButton").attr("href", "applyExam.jsp?examId=" + examId).show();
+            }
+            
+            $("#examIdInput").val(examId);
+            
+            // AJAX call to fetch exam details
+            $.ajax({
+                url: "/getExamDetails",
+                method: "GET",
+                data: { examId: examId },
+                success: function(response) {
+                    $("#examDetails").html(response);
+                    $("#updateButton").data("exam-id", examId).show();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error retrieving exam details:", error);
+                }
             });
-
         });
-    </script>
+        
+         var message = "<%= request.getParameter("message") %>";
+         var type = "<%= request.getParameter("type") %>";
+        
+        if (message) {
+            var alertMessage = "";
+            
+            if (message === "examAddedSuccessfully") {
+                alertMessage = "Exam added successfully!";
+                type = "success";
+            } else if (message === "errorAddingExam") {
+                alertMessage = "Something went wrong. Please try again later.";
+            } else if (message === "examUpdatedSuccessfully") {
+                alertMessage = "Exam updated successfully!";
+                type = "success";
+            } else if (message === "errorUpdatingExam") {
+                alertMessage = "Error updating exam. Please try again later.";
+            } else if (message === "examAppliedSuccessfully") {
+                alertMessage = "Exam applied successfully!";
+                type = "success";
+            } else if (message === "examApplicationUnSuccessfull") {
+                alertMessage = "Exam application unsuccessful. Please try again later.";
+            }
+            
+            showAlert(alertMessage, type);
+        }
+        
+        // Function to show alerts
+        function showAlert(message, type) {
+            if (message) {
+                var alertElement = $('#alertMessage');
+                alertElement.text(message);
+                if (type === 'success') {
+                    alertElement.removeClass('alert-danger').addClass('alert-success');
+                } else {
+                    alertElement.removeClass('alert-success').addClass('alert-danger');
+                }
+                alertElement.addClass('show');
+                setTimeout(function() {
+                    alertElement.fadeOut('slow', function() {
+                        $(this).remove();
+                    });
+                }, 3000);
+            }
+        }
+        
+        // Event listener for update exam modal
+        $('#updateExamModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            var examId = button.data('exam-id');
+            var examName = button.data('exam-name');
+            var examDate = button.data('exam-date');
+            var applicationStart = button.data('application-start');
+            var applicationEnd = button.data('application-end');
+            
+            console.log("Exam Date:", examDate);
+            console.log("Application Start:", applicationStart, "Application End:", applicationEnd);
+            
+            var modal = $(this);
+            modal.find('#examIdInput').val(examId);
+            modal.find('#examName').val(examName);
+            modal.find('#examDate').val(examDate);
+            modal.find('#applicationStart').val(applicationStart);
+            modal.find('#applicationEnd').val(applicationEnd);
+        });
+        
+        // Event listener for update exam form submission
+        $('#updateExamForm').submit(function(event) {
+            console.log("Form submitted");
+            
+            var examDate = $('#examDate').val();
+            var applicationStart = $('#applicationStart').val();
+            var applicationEnd = $('#applicationEnd').val();
+            
+            console.log("Exam Date:", examDate);
+            console.log("Application Start:", applicationStart);
+            console.log("Application End:", applicationEnd);
+            
+            var threeDaysFromToday = new Date();
+            threeDaysFromToday.setDate(threeDaysFromToday.getDate() + 3);
+            
+            // Clear previous error messages
+            $('#examDateError').text('');
+            $('#applicationStartError').text('');
+            $('#applicationEndError').text('');
+            $('#examNameError').text('');
+            
+            var valid = true;
+            
+            // Perform validation checks
+            if (new Date(applicationStart) >= new Date(applicationEnd)) {
+                $('#applicationStartError').text('The application start date should be before the application end date.');
+                valid = false;
+            }
+            if (new Date(applicationStart) >= new Date(examDate) || new Date(applicationEnd) >= new Date(examDate)) {
+                $('#applicationEndError').text('Both application start and end dates should be before the exam date.');
+                valid = false;
+            } 
+            if (new Date(examDate) < threeDaysFromToday) {
+                $('#examDateError').text('The exam date should be at least 3 days from today.');
+                valid = false;
+            }
+            
+            // Prevent form submission if validation fails
+            if (!valid) {
+                event.preventDefault();
+            }
+        });
+        
+        // Event listener for show all exams button
+        $("#showAllExamsBtn").click(function() {
+            console.log('from show all button');
+            $.ajax({
+                url: "loadAllExams",
+                method: "POST",
+                success: function(response) {
+                    location.reload();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error retrieving all exams:", error);
+                }
+            });
+        });
+    });
+</script>
+
 </body>
 
 </html>

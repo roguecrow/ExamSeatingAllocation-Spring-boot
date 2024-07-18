@@ -46,8 +46,8 @@ System.out.println("currentPage :" + currentPage);
                             Services
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="servicesDropdown">
-                            <li><a class="dropdown-item" href="viewUserQueries.jsp">View User Queries</a></li>
-                            <li><a class="dropdown-item" href="viewAppliedUsers.jsp">View Applied Users</a></li>
+                            <li><a class="dropdown-item" href="viewUserQueries.jsp">User Queries</a></li>
+                            <li><a class="dropdown-item" href="viewAppliedUsers.jsp">Applied Users</a></li>
                         </ul>
                     </li>
                     <% } %>
@@ -68,8 +68,8 @@ System.out.println("currentPage :" + currentPage);
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownUser1">
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle"></i> Profile</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li>
+         <!--                <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle"></i> Profile</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li> -->
                         <div class="dropdown-divider"></div>
                         <li>
                             <form action="logout" method="post" style="display: inline;">

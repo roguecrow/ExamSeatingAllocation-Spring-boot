@@ -55,9 +55,6 @@ public class UserController {
 	 private static final String SESSION_ATTR_EXAMS = "exams";
 	 private static final String ATTR_ERROR_MESSAGE = "errorMessage";
 
-
-
-	
 	@Autowired
 	UserDAO userDAO;
 	
@@ -86,7 +83,7 @@ public class UserController {
 		public String userLogin(@RequestParam("email") String email, @RequestParam("password") String password,
 				HttpSession session, Model model) throws Exception {
 			if (userDAO.findUser(email, password, user, true)) {
-				session.setAttribute("SESSION_ATTR_USER_DETAILS", user);
+				session.setAttribute(SESSION_ATTR_USER_DETAILS, user);
 				session.setAttribute(SESSION_ATTR_EXAMS, examDAO.getAllExams());
 				return REDIRECT_TO_HOMEPAGE;
 			} else {
@@ -333,6 +330,7 @@ public class UserController {
     
     @PostMapping("/fetchSeatAllocation")
     public ResponseEntity<String> fetchSeatAllocation(@RequestParam int examId, @RequestParam int rollNo) {
+    	System.out.println("in fetch seat allocation");
         ExamAllocatedLocation locationDetails = examDAO.getExamLocationDetails(rollNo, examId);
 		Gson gson = new Gson();
 		String jsonResponse = gson.toJson(locationDetails);

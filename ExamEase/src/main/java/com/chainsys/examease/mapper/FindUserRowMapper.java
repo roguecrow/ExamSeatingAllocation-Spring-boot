@@ -16,7 +16,6 @@ public class FindUserRowMapper implements RowMapper<User> {
         user.setEmail(resultSet.getString("email"));
         user.setPassword(resultSet.getString("password"));
         user.setRoleId(resultSet.getInt("role_id"));
-        System.out.println("in FindUsermapper -"+ user.getPassword());
         return user;
     }
 }

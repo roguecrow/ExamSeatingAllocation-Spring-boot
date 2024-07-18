@@ -107,7 +107,6 @@ public class UserDAOImpl implements UserDAO {
 
 	public Exam getExamById(int examId) {
 		String getExamQuery = "SELECT exam_id, exam_name, description, exam_date, application_start_date, application_end_date FROM exams WHERE exam_id = ?";
-
 		return jdbcTemplate.queryForObject(getExamQuery, new ExamDetailsRowMapper(), examId);
 	}
 
@@ -148,9 +147,10 @@ public class UserDAOImpl implements UserDAO {
 	}
 
 	public List<ExamLocation> findExamLocationById(int examId) {
-		String getExamLocations = "SELECT location_id, city, venue_name, hall_name, total_capacity, address, location_url, filled_capacity FROM exam_locations WHERE exam_id = ?";
-		return jdbcTemplate.query(getExamLocations, new ExamLocationDetailsRowMapper(), new Object[] { examId });
+	    String getExamLocations = "SELECT location_id, city, venue_name, hall_name, total_capacity, address, location_url, filled_capacity FROM exam_locations WHERE exam_id = ?";
+	    return jdbcTemplate.query(getExamLocations, new ExamLocationDetailsRowMapper(), (Object) examId);
 	}
+
 
 	public int getLastAllocatedSeatId(int locationId) {
 	    String getSeatId = "SELECT MAX(allocated_seat) AS last_seat FROM exam_seating WHERE location_id = ?";
@@ -170,7 +170,7 @@ public class UserDAOImpl implements UserDAO {
 
 	public List<Integer> getExamIdsForUser(int rollNo) {
 		String query = "SELECT exam_id FROM exam_seating WHERE roll_no = ?";
-		return jdbcTemplate.query(query, new GetExamIdsMapper(), new Object[] { rollNo });
+		return jdbcTemplate.query(query, new GetExamIdsMapper(), (Object) rollNo);
 	}
 
 	public List<Exam> findExam(String queryString) {
@@ -287,7 +287,7 @@ public class UserDAOImpl implements UserDAO {
 	            } else {
 	                return null;
 	            }
-	        },new Object[]{serialNo});
+	        },(Object) serialNo);
 	    }
 
 	    private String encodeToBase64(byte[] data) {
